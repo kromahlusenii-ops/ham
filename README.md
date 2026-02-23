@@ -1,5 +1,10 @@
+<p align="center">
+  <img src="ham.png" alt="HAM" width="400">
+</p>
+
 # HAM (Hierarchical Agent Memory)
-For builders who can’t waste a single token. Go HAM.
+
+**For builders who can't waste a single token. Go HAM.**
 
 A Claude Code skill that sets up and maintains a scoped memory system for AI coding agents. Instead of one massive `CLAUDE.md` that loads on every request, this creates a tree of lightweight context files — each containing only what the agent needs for the directory it's working in.
 
