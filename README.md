@@ -1,4 +1,4 @@
-# Hierarchical Agent Memory
+# HAM (Hierarchical Agent Memory)
 
 A Claude Code skill that sets up and maintains a scoped memory system for AI coding agents. Instead of one massive `CLAUDE.md` that loads on every request, this creates a tree of lightweight context files — each containing only what the agent needs for the directory it's working in.
 
@@ -36,7 +36,7 @@ The key: the operating instructions in the root file tell the agent to **create 
 
 ```bash
 # Clone into your Claude skills directory
-git clone https://github.com/kromahlusenii-ops/hierarchical-agent-memory.git ~/.claude/skills/hierarchical-agent-memory
+git clone https://github.com/kromahlusenii-ops/ham.git ~/.claude/skills/ham
 ```
 
 ### Claude.ai

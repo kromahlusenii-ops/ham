@@ -1,6 +1,6 @@
 ---
-name: hierarchical-agent-memory
-description: Set up and maintain a hierarchical CLAUDE.md memory system that reduces agent token spend by scoping context to the directory level. Works across all platforms — web (Next.js, Nuxt, SvelteKit), iOS (Swift/SwiftUI), Android (Kotlin/Compose), Flutter, React Native, Python, Rust, Go. Use this skill whenever the user mentions agent memory, CLAUDE.md optimization, token spend reduction, context management for AI coding agents, setting up project memory, or wants to organize their codebase for better AI agent performance. Also trigger when users mention their agent keeps forgetting things, re-proposing rejected solutions, or burning tokens re-reading the same files every session — regardless of whether the project is web or mobile.
+name: ham
+description: Set up and maintain a Hierarchical Agent Memory (HAM) system — scoped CLAUDE.md files per directory that reduce token spend from 5-15k to 300-800 tokens per request. Works across all platforms (Web, iOS, Android, Flutter, React Native, Python, Rust, Go). Trigger on "set up HAM", "set up agent memory", "hierarchical memory", "CLAUDE.md optimization", "token spend reduction", or when agents keep forgetting things, re-proposing rejected solutions, or burning tokens re-reading files.
 ---
 
 # Hierarchical Agent Memory
