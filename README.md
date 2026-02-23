@@ -46,19 +46,29 @@ Upload the skill folder through Settings → Skills.
 
 ## Usage
 
-After installation, just tell Claude what you need:
+### Commands
 
-- **New project:** "Set up agent memory for my new Next.js project with Supabase"
-- **New mobile project:** "Set up agent memory for my new SwiftUI app with MVVM"
-- **Existing project:** "Set up hierarchical agent memory for this codebase"
-- **Existing mobile project:** "Set up agent memory for my Android app"
-- **Growing project:** "I'm a few weeks into this Flutter project, set up agent memory"
+| Command | What it does |
+|---|---|
+| **`go ham`** | Set up HAM in your project (auto-detects everything) |
+| **`HAM savings`** | Show token/cost savings report with transparent calculations |
+| **`HAM audit`** | Check health of your memory system |
 
-The skill auto-detects your platform (Web, iOS, Android, Flutter, React Native, Python, Rust, Go) and project maturity, then runs the appropriate setup flow:
+### Quick Start
 
-- **Greenfield** — Scaffolds the structure with stub files that grow with your project
-- **Early Stage** — Quick scan, generates memory for your 2-3 main directories, infers initial decisions
-- **Brownfield** — Deep codebase analysis, extracts embedded decisions and patterns, migrates existing CLAUDE.md files
+```
+> go ham
+```
+
+That's it. HAM auto-detects your platform (Web, iOS, Android, Flutter, React Native, Python, Rust, Go) and project maturity, then generates the appropriate structure.
+
+### See Your Savings
+
+```
+> HAM savings
+```
+
+Shows exactly how many tokens you're saving per prompt, with full transparency on how the numbers are calculated — no black-box estimates.
 
 ## What Gets Generated
 
@@ -126,12 +136,11 @@ The agent will often infer decisions from your codebase ("looks like you chose S
 
 ### Memory Audit
 
-Say "audit memory" and the agent will check for:
+Say `HAM audit` and the agent will check for:
 - Directories missing `CLAUDE.md` files
 - Oversized root or subdirectory files
 - Unreviewed items sitting in the inbox
 - Bloated decisions or patterns files needing archival
-- Orphaned references to removed code
 
 ## Compatibility
 

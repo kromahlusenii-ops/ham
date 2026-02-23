@@ -1,199 +1,329 @@
 ---
 name: ham
-description: Set up and maintain a Hierarchical Agent Memory (HAM) system — scoped CLAUDE.md files per directory that reduce token spend from 5-15k to 300-800 tokens per request. Works across all platforms (Web, iOS, Android, Flutter, React Native, Python, Rust, Go). Trigger on "set up HAM", "set up agent memory", "hierarchical memory", "CLAUDE.md optimization", "token spend reduction", or when agents keep forgetting things, re-proposing rejected solutions, or burning tokens re-reading files.
+description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "HAM savings", or "HAM stats".
 ---
 
-# Hierarchical Agent Memory
+# HAM (Hierarchical Agent Memory)
 
-Zero-dependency, file-based memory system. Scopes agent context to the directory level instead of loading one massive root file on every request.
+Scoped memory system that reduces context token spend per request.
+
+## Quick Start
+
+**Trigger:** "go ham"
+
+When user says "go ham":
+
+1. **Auto-detect everything** — scan for platform signals and project maturity silently
+2. **Generate files** — create the memory structure without asking questions
+3. **Confirm setup** — list files created, tell user to run `HAM savings` to see impact
+
+Only ask questions if detection fails.
+
+## Onboarding Flow
+
+### Step 1: Silent Detection
+
+Scan the project root for platform signals:
+
+| Files Found | Platform |
+|---|---|
+| `*.xcodeproj`, `Package.swift` | iOS |
+| `build.gradle*`, `settings.gradle` | Android |
+| `pubspec.yaml` | Flutter |
+| `package.json` + `react-native` | React Native |
+| `package.json` + `next/nuxt/svelte` | Web |
+| `pyproject.toml`, `requirements.txt` | Python |
+| `Cargo.toml` | Rust |
+| `go.mod` | Go |
+
+Detect maturity by counting subdirectories with code:
+- 0-2 dirs → **Greenfield/Early** (scaffold mode)
+- 3+ dirs → **Brownfield** (analysis mode)
+
+### Step 2: Generate Structure
+
+Create files based on detection:
+
+```
+project/
+├── CLAUDE.md              # Root context (~200 tokens)
+├── .memory/
+│   ├── decisions.md       # Empty, ready for ADRs
+│   ├── patterns.md        # Empty, ready for patterns
+│   └── inbox.md           # Inferred items (brownfield only)
+└── [src dirs]/
+    └── CLAUDE.md          # Per-directory context (brownfield only)
+```
+
+For greenfield: only create root + .memory/
+For brownfield: also create subdirectory CLAUDE.md files
+
+### Step 3: Confirm Setup
+
+After creating files, output:
+
+```
+HAM setup complete. Created [N] files.
+
+Run "HAM savings" to see estimated token and cost savings.
+```
+
+## HAM Savings Command
+
+**Trigger:** "HAM savings" or "HAM stats"
+
+When user runs this command:
+
+1. **Count actual files** — find all CLAUDE.md files and .memory/ files in the project
+2. **Measure actual token counts** — count tokens in each file (use ~4 chars = 1 token as estimate)
+3. **Calculate and display** with full transparency:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  HAM Savings Report                                     │
+├─────────────────────────────────────────────────────────┤
+│  YOUR CURRENT SETUP                                     │
+│  ─────────────────────────────────────────────────────  │
+│  Root CLAUDE.md:        [X] tokens ([Y] chars ÷ 4)     │
+│  Subdirectory files:    [N] files, [Z] tokens total    │
+│  .memory/ files:        [M] files (loaded on demand)   │
+│                                                         │
+│  TOKENS LOADED PER PROMPT                               │
+│  ─────────────────────────────────────────────────────  │
+│  Typical prompt:        [A] tokens                      │
+│    └─ Root CLAUDE.md:   [X] tokens (always)            │
+│    └─ 1 subdir file:    ~[B] tokens (when working there)│
+│                                                         │
+│  HOW WE CALCULATE "WITHOUT HAM"                         │
+│  ─────────────────────────────────────────────────────  │
+│  Without scoped memory, agents typically:               │
+│  • Re-read project structure: ~2,000-3,000 tokens       │
+│  • Re-discover conventions: ~1,500-2,500 tokens         │
+│  • Load monolithic CLAUDE.md: ~2,000-4,000 tokens       │
+│  • Estimated baseline: ~5,000-10,000 tokens/prompt      │
+│                                                         │
+│  YOUR ESTIMATED SAVINGS                                 │
+│  ─────────────────────────────────────────────────────  │
+│  Without HAM (est):     ~[baseline] tokens/prompt       │
+│  With HAM (actual):     [A] tokens/prompt               │
+│  Savings per prompt:    ~[diff] tokens ([pct]%)         │
+│                                                         │
+│  MONTHLY PROJECTION (if you average 50 prompts/day)    │
+│  ─────────────────────────────────────────────────────  │
+│  Prompts/month:         1,500                           │
+│  Tokens saved:          ~[monthly_tokens]               │
+│  Cost saved (Sonnet):   ~$[sonnet] (@$3/M input tokens)│
+│  Cost saved (Opus):     ~$[opus] (@$15/M input tokens) │
+│                                                         │
+│  NOTE: These are estimates. Actual savings depend on   │
+│  your workflow. The baseline assumes an agent without   │
+│  any memory system re-reading context each prompt.      │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Calculation Logic
+
+```python
+# Token estimation
+def count_tokens(text):
+    return len(text) // 4  # ~4 characters per token
+
+# Measure actual HAM files
+root_tokens = count_tokens(read("CLAUDE.md"))
+subdir_files = glob("**/CLAUDE.md", exclude="root")
+subdir_tokens = sum(count_tokens(read(f)) for f in subdir_files)
+avg_subdir = subdir_tokens / len(subdir_files) if subdir_files else 0
+
+# Tokens per typical prompt (root + 1 subdir)
+ham_tokens = root_tokens + avg_subdir
+
+# Baseline estimate (without any memory system)
+# Conservative: agent re-orients each prompt
+baseline_low = 5000
+baseline_high = 10000
+baseline_mid = 7500
+
+# Savings
+savings_tokens = baseline_mid - ham_tokens
+savings_pct = (savings_tokens / baseline_mid) * 100
+
+# Monthly (50 prompts/day × 30 days)
+monthly_prompts = 1500
+monthly_tokens_saved = savings_tokens * monthly_prompts
+cost_sonnet = (monthly_tokens_saved / 1_000_000) * 3  # $3/M
+cost_opus = (monthly_tokens_saved / 1_000_000) * 15   # $15/M
+```
 
 ## System Architecture
 
 Three layers:
 
-**Layer 1 — Root CLAUDE.md** (always loaded, under 250 tokens)
-Tech stack, hard rules, operating instructions. No implementation details.
+**Layer 1 — Root CLAUDE.md** (~200 tokens)
+Stack, rules, operating instructions. No implementation details.
 
-**Layer 2 — Subdirectory CLAUDE.md files** (loaded per-directory, under 300 tokens each)
-Scoped context per major directory. Agent reads root + target directory file only.
+**Layer 2 — Subdirectory CLAUDE.md** (~250 tokens each)
+Scoped context per directory. Agent reads root + target directory only.
 
-**Layer 3 — .memory/ directory** (referenced on demand)
+**Layer 3 — .memory/** (on-demand)
 - `decisions.md` — Confirmed Architecture Decision Records
-- `patterns.md` — Confirmed reusable code patterns
-- `inbox.md` — Quarantine for inferred items awaiting developer confirmation
-- `sessions/YYYY-MM-DD.md` — Disposable session scratchpads
-
-Never write inferred knowledge directly to `decisions.md` or `patterns.md`. All inferences go to `inbox.md` and stay there until the developer explicitly confirms them.
-
-```
-project-root/
-├── CLAUDE.md                     # Layer 1: Global (~150-250 tokens)
-├── .memory/
-│   ├── decisions.md              # Confirmed ADRs
-│   ├── patterns.md               # Confirmed patterns
-│   ├── inbox.md                  # Inferred items awaiting confirmation
-│   └── sessions/
-│       └── YYYY-MM-DD.md         # Session scratchpads (disposable)
-├── src/
-│   ├── CLAUDE.md                 # Layer 2: Shared src conventions
-│   ├── api/
-│   │   └── CLAUDE.md             # API-specific context
-│   ├── components/
-│   │   └── CLAUDE.md             # UI component context
-│   ├── lib/
-│   │   └── CLAUDE.md             # Utilities & shared logic
-│   └── db/
-│       └── CLAUDE.md             # Database & schema context
-└── ...
-```
-
-This is the web structure. For iOS, Android, Flutter, and React Native directory structures, read `references/platforms.md`.
-
-## Setup Flow
-
-### Step 1: Detect Platform and Maturity
-
-Detect the platform first, then determine project maturity.
-
-| Signal Files | Platform |
-|---|---|
-| `*.xcodeproj`, `*.xcworkspace`, `Package.swift` | iOS (Swift/SwiftUI) |
-| `build.gradle`, `build.gradle.kts`, `settings.gradle` | Android (Kotlin) |
-| `pubspec.yaml` | Flutter |
-| `react-native.config.js`, `metro.config.js`, or `package.json` with `react-native` | React Native |
-| `package.json` with `next`, `nuxt`, `svelte`, `remix`, or `astro` | Web (JS/TS Framework) |
-| `package.json` with `express`, `fastify`, `hono`, or `koa` | Web (Node Backend) |
-| `pyproject.toml`, `requirements.txt` with `django`, `flask`, or `fastapi` | Python Web |
-| `Cargo.toml` | Rust |
-| `go.mod` | Go |
-
-If multiple signals exist (e.g., `package.json` + `ios/` + `android/`), treat as cross-platform.
-
-Determine maturity by checking the platform's source directory (see `references/platforms.md` for source directory per platform):
-- Source directory has multiple subdirectories with code → **Brownfield**
-- Source directory has fewer than 3 subdirectories with code → **Early Stage**
-- No source directory, or user says starting fresh → **Greenfield**
-
-### Step 2: Run the Appropriate Setup Path
-
-#### Path A: Greenfield (New Project)
-
-1. Ask the user for their stack (framework, language, database, deployment target).
-2. Generate root `CLAUDE.md` using the platform-specific template from `references/templates.md`. Populate with declared stack, default rules, and operating instructions.
-3. Generate `.memory/decisions.md` — empty, structured with ADR format header and one example entry.
-4. Generate `.memory/patterns.md` — empty, structured with pattern format header and one example entry.
-5. Generate `.memory/inbox.md` — empty, with header: "Items here are inferred or unconfirmed. Promote to decisions.md or patterns.md when confirmed. Delete if incorrect."
-6. Generate `.memory/sessions/` — empty directory with `.gitkeep`.
-7. Do NOT create subdirectory CLAUDE.md files. Operating instructions tell the agent to create them as directories are created.
-
-Tell the user the system grows with the project — the agent creates CLAUDE.md files in new directories automatically.
-
-#### Path B: Early Stage (2-4 weeks in)
-
-1. Scan: project config, directory structure, existing CLAUDE.md or agent config files. Identify stack, conventions, top 2-3 directories.
-2. Generate root `CLAUDE.md` — lean, accurate stack, operating instructions.
-3. Generate `.memory/inbox.md` — pre-populate with 3-5 inferred decisions. Tell user to review and promote.
-4. Generate `.memory/decisions.md` — empty, structured. Only populated via inbox promotion.
-5. Generate `.memory/patterns.md` — extract 2-3 high-confidence patterns (consistent across multiple files). Put uncertain patterns in inbox.
-6. Generate subdirectory `CLAUDE.md` files for the 2-3 directories with meaningful code only.
-7. If existing root `CLAUDE.md` exceeds ~400 tokens, decompose: move specifics to subdirectory files, trim root to stack + rules + operating instructions. Show user before/after.
-
-#### Path C: Brownfield (Established Project)
-
-1. Analyze the codebase. For platform-specific analysis checklists (what to look for in iOS, Android, Flutter, RN, web), read `references/platforms.md`.
-2. Generate root `CLAUDE.md` — lean, accurate stack, operating instructions.
-3. Generate `.memory/inbox.md` — populate with every inferred decision and pattern. Include for each: what was chosen, why (inferred), alternatives likely considered, confidence level (high/medium/low).
-4. Generate `.memory/decisions.md` — empty, structured. Only populated via inbox promotion.
-5. Generate `.memory/patterns.md` — populate only with high-confidence patterns (consistent across 3+ files). All others go in inbox.
-6. Generate subdirectory `CLAUDE.md` files for every major directory with meaningful code.
-7. If existing CLAUDE.md/agent config is bloated, decompose into the hierarchical system. Show before/after token comparison. Preserve all information.
-8. Present all files and walk user through inbox review. Explain promotion process: confirm → move to canonical file, reject → delete, revise → edit then promote.
+- `patterns.md` — Confirmed reusable patterns
+- `inbox.md` — Inferred items awaiting confirmation
 
 ## Operating Instructions
 
-Embed this block in the root `CLAUDE.md` of every project. This is the mechanism that makes the system self-maintaining.
+Embed in every root CLAUDE.md:
 
 ```markdown
 ## Agent Memory System
 
 ### Before Working
-1. Read this file first for global context.
-2. Read the target directory's CLAUDE.md before making changes there.
-3. If a task spans multiple directories, read each affected directory's CLAUDE.md (limit 3). If more than 3, read the closest shared parent CLAUDE.md plus root.
-4. Check .memory/decisions.md before proposing architectural changes.
-5. Check .memory/patterns.md before implementing common functionality.
+- Read this file for global context
+- Read target directory's CLAUDE.md before changes
+- Check .memory/decisions.md before architectural changes
+- Check .memory/patterns.md before implementing common functionality
 
 ### During Work
-6. When creating a new directory under [source root], create a CLAUDE.md in it documenting:
-   - Purpose of this directory
-   - Conventions specific to this directory
-   - Active integrations or dependencies
-   - Patterns unique to this area
+- Create CLAUDE.md in any new directory you create
 
 ### After Work
-7. If you changed conventions, patterns, or architecture: update memory. If nothing changed, don't.
-8. Log new conventions/patterns to the relevant directory's CLAUDE.md.
-9. Log architectural decisions to .memory/decisions.md using the ADR format.
-10. Log reusable patterns to .memory/patterns.md.
-11. Never delete or overwrite confirmed decisions. Mark as [superseded] and add a new entry.
-12. If uncertain about an inference, write to .memory/inbox.md — never to canonical files.
+- Update relevant CLAUDE.md if conventions changed
+- Log decisions to .memory/decisions.md (ADR format)
+- Log patterns to .memory/patterns.md
+- Uncertain inferences → .memory/inbox.md (never canonical files)
 
-### Memory Safety
-- Never record API keys, secrets, user data, or customer information.
-- Never record speculative debugging hypotheses outside session scratchpads.
-- Never overwrite confirmed decisions — only supersede with new entries.
-- Never promote items from inbox.md without explicit developer confirmation.
+### Safety
+- Never record secrets, API keys, or user data
+- Never overwrite decisions — mark as [superseded]
+- Never promote from inbox without user confirmation
 ```
 
-Replace `[source root]` with the platform's source directory:
+## HAM Audit Command
 
-| Platform | Source Root |
-|---|---|
-| Web | `src/` |
-| iOS | `Features/` and `Core/` |
-| Android | `features/` and `core/` |
-| Flutter | `lib/features/` and `lib/core/` |
-| React Native | `src/features/` and `src/core/` |
+**Trigger:** "HAM audit" or "HAM health"
 
-For cross-platform projects, also include `ios/` and `android/`.
+When user runs this command, check the health of the memory system:
 
-## Memory Audit
+```
+┌─────────────────────────────────────────────────────────┐
+│  HAM Health Check                                       │
+├─────────────────────────────────────────────────────────┤
+│  Root CLAUDE.md                                         │
+│    Lines: [N] (recommend: <60)                         │
+│    Tokens: [X] (recommend: <250)                       │
+│    Status: [✓ healthy | ⚠ oversized]                   │
+│                                                         │
+│  Subdirectory CLAUDE.md files                           │
+│    Found: [N] files                                     │
+│    Oversized: [M] files (>75 lines)                    │
+│    Missing: [K] directories have code but no CLAUDE.md │
+│                                                         │
+│  .memory/ status                                        │
+│    decisions.md: [N] entries                           │
+│    patterns.md: [N] entries                            │
+│    inbox.md: [N] unreviewed items [⚠ if >0]           │
+│                                                         │
+│  Recommendations:                                       │
+│    [List any issues found]                             │
+└─────────────────────────────────────────────────────────┘
+```
 
-When the user says "audit memory" or "check memory health," run these checks:
+## Templates
 
-1. **Missing files:** Find directories under source root containing code but no CLAUDE.md.
-2. **Oversized files:** Flag root CLAUDE.md over ~60 lines or subdirectory files over ~75 lines.
-3. **Stale inbox:** If `.memory/inbox.md` has content, remind user to review and promote or delete.
-4. **Bloated memory:** Flag `decisions.md` or `patterns.md` exceeding ~100 entries. Suggest archiving superseded decisions to `decisions-archive.md`.
-5. **Orphaned references:** Check if subdirectory CLAUDE.md files reference patterns, integrations, or conventions that no longer exist.
+### Root CLAUDE.md (Universal)
 
-Present as a checklist. Do not auto-fix — the developer decides.
+```markdown
+# [Project Name]
 
-## File Templates
+## Stack
+- [Auto-detected framework/language]
+- [Database if detected]
+- [Key dependencies]
 
-Read `references/templates.md` for starter templates: root CLAUDE.md (per platform), subdirectory CLAUDE.md, decisions.md, patterns.md, inbox.md, and session scratchpad. Use these when generating files.
+## Rules
+- [2-3 critical project rules]
 
-## Maintenance
+## Agent Memory System
+[Insert operating instructions from above]
+```
 
-### Token Budget
-- Root `CLAUDE.md`: under 250 tokens (~60 lines). If growing, move content to subdirectory files or `.memory/`.
-- Subdirectory `CLAUDE.md`: under 300 tokens (~75 lines). If growing, split the directory or reduce detail.
-- `decisions.md`: archive superseded entries to `decisions-archive.md` past ~100 entries.
-- `patterns.md`: keep code examples minimal — just enough to implement correctly.
-- `inbox.md`: review weekly. Items older than a week should be confirmed or deleted.
+### Subdirectory CLAUDE.md
 
-Actual savings vary — agents still read source files. The consistent gain is reduced re-orientation and eliminated repeated architecture debates.
+```markdown
+# [Directory] Context
 
-### Inbox Review
-The inbox is the trust boundary. Review periodically:
-- **Confirm:** Move to `decisions.md` or `patterns.md`, delete from inbox.
-- **Reject:** Delete. Optionally note in directory CLAUDE.md to prevent re-inference.
-- **Revise:** Edit to be accurate, then promote.
+## Purpose
+[One sentence]
 
-Empty inbox = healthy system. Growing inbox = the agent needs guidance.
+## Conventions
+- [Directory-specific conventions]
 
-### Team Safety
-- Prefer append-only edits — add new entries, don't rewrite old ones.
-- Mark superseded decisions rather than deleting (preserves history, avoids merge conflicts).
-- Each developer uses their own session scratchpads in `.memory/sessions/`.
-- On merge conflicts, prefer the version with more information.
+## Patterns
+- [Key patterns used here]
+```
+
+### decisions.md
+
+```markdown
+# Architecture Decisions
+
+## ADR-001: [Title] (YYYY-MM-DD)
+**Status:** active
+**Decision:** [What was chosen]
+**Context:** [Why this choice was made]
+**Alternatives:** [What was rejected]
+```
+
+### inbox.md
+
+```markdown
+# Memory Inbox
+
+Review periodically. Confirm → move to decisions/patterns. Reject → delete.
+
+---
+```
+
+## How We Estimate Savings (Transparency)
+
+### Where "Without HAM" numbers come from
+
+Without a scoped memory system, an AI coding agent typically:
+
+| Activity | Token Estimate | Source |
+|---|---|---|
+| Re-reading directory structure | 2,000-3,000 | Listing files, understanding layout |
+| Re-discovering conventions | 1,500-2,500 | Reading config files, package.json, etc. |
+| Loading monolithic CLAUDE.md | 2,000-4,000 | If one exists, or equivalent context |
+| **Total baseline** | **5,000-10,000** | Per prompt without scoped memory |
+
+These are estimates based on typical agent behavior. Your actual baseline depends on:
+- Project size and complexity
+- How much the agent re-reads each session
+- Whether you have any existing context files
+
+### Where "With HAM" numbers come from
+
+HAM tokens are **measured directly** from your files:
+- Count characters in each CLAUDE.md file
+- Divide by 4 (rough token estimate)
+- Sum root + typical subdirectory file
+
+### Cost assumptions
+
+| Model | Input Cost | Source |
+|---|---|---|
+| Claude Sonnet | $3/M tokens | Anthropic API pricing (Feb 2025) |
+| Claude Opus | $15/M tokens | Anthropic API pricing (Feb 2025) |
+
+**Monthly projection assumes:**
+- 50 prompts/day (adjust to your usage)
+- 30 days/month
+- Savings = (baseline - HAM tokens) × prompts
+
+### Honest caveats
+
+- Baseline is an **estimate** — your mileage may vary
+- HAM tokens are **measured** — these are accurate
+- Actual savings depend on your workflow
+- Some prompts won't benefit (e.g., simple questions)
+- Agents still read source files — HAM reduces *context* overhead, not all token usage
