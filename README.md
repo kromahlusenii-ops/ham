@@ -36,7 +36,7 @@ The key: the operating instructions in the root file tell the agent to **create 
 
 ```bash
 # Clone into your Claude skills directory
-git clone https://github.com/AhoraCore/hierarchical-agent-memory.git ~/.claude/skills/hierarchical-agent-memory
+git clone https://github.com/kromahlusenii-ops/hierarchical-agent-memory.git ~/.claude/skills/hierarchical-agent-memory
 ```
 
 ### Claude.ai
