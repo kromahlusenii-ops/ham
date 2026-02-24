@@ -86,6 +86,7 @@ your-project/
 │   ├── decisions.md              # Confirmed Architecture Decision Records
 │   ├── patterns.md               # Confirmed reusable code patterns
 │   ├── inbox.md                  # Inferred items awaiting your review
+│   ├── audit-log.md              # Audit history (auto-maintained)
 │   └── sessions/
 │       └── YYYY-MM-DD.md         # Session scratchpads (disposable)
 ├── src/
@@ -106,7 +107,8 @@ MyApp/
 ├── .memory/
 │   ├── decisions.md              # "SwiftData over Core Data", "MVVM not TCA"
 │   ├── patterns.md               # Navigation, async/await, Combine patterns
-│   └── inbox.md                  # Inferred items awaiting your review
+│   ├── inbox.md                  # Inferred items awaiting your review
+│   └── audit-log.md              # Audit history (auto-maintained)
 ├── MyApp/
 │   ├── Features/
 │   │   ├── Auth/
@@ -132,6 +134,7 @@ The operating instructions embedded in the root `CLAUDE.md` tell the agent to:
 1. **Before working** — Read the target directory's `CLAUDE.md` and check `.memory/decisions.md` before proposing changes. For multi-directory tasks, read up to 3 affected directories' files.
 2. **During work** — Create a `CLAUDE.md` in any new directory it creates
 3. **After work** — Update the relevant files when conventions, patterns, or architecture change. If the agent isn't sure about something, it goes in `.memory/inbox.md` — never directly into canonical memory.
+4. **Periodic health checks** — After 10 sessions or 14 days without an audit, the agent suggests one during startup. Non-blocking — you can skip it.
 
 You don't maintain this system. The agent does. You just review the inbox periodically and confirm or reject inferred items.
 
@@ -141,11 +144,16 @@ The agent will often infer decisions from your codebase ("looks like you chose S
 
 ### Memory Audit
 
-Say `HAM audit` and the agent will check for:
+Say `HAM audit` or let the agent remind you. After 10 sessions or 14 days without an audit, the agent suggests one during startup checks. It's a suggestion, not a requirement — skip it if you're in the middle of something.
+
+The audit checks for:
 - Directories missing `CLAUDE.md` files
 - Oversized root or subdirectory files
 - Unreviewed items sitting in the inbox
 - Bloated decisions or patterns files needing archival
+- Orphaned references to removed code
+
+Audit results are logged in `.memory/audit-log.md` (last 5 entries kept).
 
 ## Compatibility
 

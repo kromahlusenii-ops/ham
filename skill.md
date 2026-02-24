@@ -50,7 +50,8 @@ project/
 ├── .memory/
 │   ├── decisions.md       # Empty, ready for ADRs
 │   ├── patterns.md        # Empty, ready for patterns
-│   └── inbox.md           # Inferred items (brownfield only)
+│   ├── inbox.md           # Inferred items (brownfield only)
+│   └── audit-log.md       # Audit history (auto-maintained)
 └── [src dirs]/
     └── CLAUDE.md          # Per-directory context (brownfield only)
 ```
@@ -220,6 +221,7 @@ Scoped context per directory. Agent reads root + target directory only.
 - `decisions.md` — Confirmed Architecture Decision Records
 - `patterns.md` — Confirmed reusable patterns
 - `inbox.md` — Inferred items awaiting confirmation
+- `audit-log.md` — Audit history (auto-maintained, last 5 entries)
 
 ## Operating Instructions
 
@@ -233,6 +235,7 @@ Embed in every root CLAUDE.md:
 - Read target directory's CLAUDE.md before changes
 - Check .memory/decisions.md before architectural changes
 - Check .memory/patterns.md before implementing common functionality
+- Check if a memory audit is due: read `.memory/audit-log.md` for the last audit date. If 14+ days have passed OR 10+ session files in `.memory/sessions/` are dated after the last audit, suggest: "It's been [N days/sessions] since the last memory audit. Run one? (say 'HAM audit' or skip)". Do not repeat if already suggested this session. If `audit-log.md` is missing, treat as never audited.
 
 ### During Work
 - Create CLAUDE.md in any new directory you create
@@ -251,9 +254,9 @@ Embed in every root CLAUDE.md:
 
 ## HAM Audit Command
 
-**Trigger:** "HAM audit" or "HAM health"
+**Trigger:** "HAM audit" or "HAM health", or accepted from a proactive suggestion
 
-When user runs this command, check the health of the memory system:
+When user runs this command (or accepts a proactive audit suggestion), check the health of the memory system:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -278,6 +281,11 @@ When user runs this command, check the health of the memory system:
 │    [List any issues found]                             │
 └─────────────────────────────────────────────────────────┘
 ```
+
+After presenting results:
+- If `.memory/audit-log.md` doesn't exist, create it from the template in `references/templates.md`.
+- Append an entry to `.memory/audit-log.md` with the date, number of issues found, and a one-line summary.
+- If the table exceeds 5 entries, remove the oldest row (keeping the header).
 
 ## Templates
 
