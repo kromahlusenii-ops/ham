@@ -58,14 +58,63 @@ project/
 For greenfield: only create root + .memory/
 For brownfield: also create subdirectory CLAUDE.md files
 
-### Step 3: Confirm Setup
+### Step 3: Capture Baseline
+
+Before creating any files, measure what exists:
+
+```python
+# Capture baseline for savings comparison
+baseline = {
+    "captured_at": "YYYY-MM-DD",
+    "existing_claude_md": {
+        "found": true/false,
+        "path": "CLAUDE.md",
+        "chars": 1234,
+        "tokens": 308  # chars ÷ 4
+    },
+    "existing_context_files": [
+        # Any other .md files that were serving as context
+    ],
+    "total_baseline_tokens": 308
+}
+```
+
+Save this to `.memory/baseline.json`:
+
+```json
+{
+  "captured_at": "2026-02-23",
+  "existing_claude_md": {
+    "found": true,
+    "chars": 4820,
+    "tokens": 1205
+  },
+  "notes": "Migrated from monolithic CLAUDE.md"
+}
+```
+
+If no existing CLAUDE.md, use estimated baseline:
+
+```json
+{
+  "captured_at": "2026-02-23",
+  "existing_claude_md": {
+    "found": false
+  },
+  "estimated_baseline_tokens": 7500,
+  "notes": "No existing memory system. Using estimated baseline for agent re-orientation costs."
+}
+```
+
+### Step 4: Confirm Setup
 
 After creating files, output:
 
 ```
 HAM setup complete. Created [N] files.
+Baseline captured in .memory/baseline.json
 
-Run "HAM savings" to see estimated token and cost savings.
+Run "HAM savings" to see your token and cost savings.
 ```
 
 ## HAM Savings Command
@@ -74,15 +123,23 @@ Run "HAM savings" to see estimated token and cost savings.
 
 When user runs this command:
 
-1. **Count actual files** — find all CLAUDE.md files and .memory/ files in the project
-2. **Measure actual token counts** — count tokens in each file (use ~4 chars = 1 token as estimate)
-3. **Calculate and display** with full transparency:
+1. **Read baseline** — load `.memory/baseline.json` for before comparison
+2. **Count actual files** — find all CLAUDE.md files and .memory/ files in the project
+3. **Measure actual token counts** — count tokens in each file (use ~4 chars = 1 token as estimate)
+4. **Calculate and display** with full transparency:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  HAM Savings Report                                     │
 ├─────────────────────────────────────────────────────────┤
-│  YOUR CURRENT SETUP                                     │
+│  BASELINE (from .memory/baseline.json)                  │
+│  ─────────────────────────────────────────────────────  │
+│  Captured: [date]                                       │
+│  Old CLAUDE.md: [X] tokens ([found/not found])         │
+│  Estimated re-orientation: ~[Y] tokens/prompt           │
+│  Total baseline: [Z] tokens/prompt                      │
+│                                                         │
+│  YOUR CURRENT HAM SETUP                                 │
 │  ─────────────────────────────────────────────────────  │
 │  Root CLAUDE.md:        [X] tokens ([Y] chars ÷ 4)     │
 │  Subdirectory files:    [N] files, [Z] tokens total    │
@@ -92,33 +149,28 @@ When user runs this command:
 │  ─────────────────────────────────────────────────────  │
 │  Typical prompt:        [A] tokens                      │
 │    └─ Root CLAUDE.md:   [X] tokens (always)            │
-│    └─ 1 subdir file:    ~[B] tokens (when working there)│
+│    └─ 1 subdir file:    ~[B] tokens (when in subdir)   │
 │                                                         │
-│  HOW WE CALCULATE "WITHOUT HAM"                         │
+│  YOUR ACTUAL SAVINGS                                    │
 │  ─────────────────────────────────────────────────────  │
-│  Without scoped memory, agents typically:               │
-│  • Re-read project structure: ~2,000-3,000 tokens       │
-│  • Re-discover conventions: ~1,500-2,500 tokens         │
-│  • Load monolithic CLAUDE.md: ~2,000-4,000 tokens       │
-│  • Estimated baseline: ~5,000-10,000 tokens/prompt      │
+│  Before HAM:            [baseline] tokens/prompt        │
+│  After HAM:             [A] tokens/prompt               │
+│  Savings per prompt:    [diff] tokens ([pct]%)          │
 │                                                         │
-│  YOUR ESTIMATED SAVINGS                                 │
-│  ─────────────────────────────────────────────────────  │
-│  Without HAM (est):     ~[baseline] tokens/prompt       │
-│  With HAM (actual):     [A] tokens/prompt               │
-│  Savings per prompt:    ~[diff] tokens ([pct]%)         │
-│                                                         │
-│  MONTHLY PROJECTION (if you average 50 prompts/day)    │
+│  MONTHLY PROJECTION (50 prompts/day × 30 days)         │
 │  ─────────────────────────────────────────────────────  │
 │  Prompts/month:         1,500                           │
 │  Tokens saved:          ~[monthly_tokens]               │
 │  Cost saved (Sonnet):   ~$[sonnet] (@$3/M input tokens)│
 │  Cost saved (Opus):     ~$[opus] (@$15/M input tokens) │
-│                                                         │
-│  NOTE: These are estimates. Actual savings depend on   │
-│  your workflow. The baseline assumes an agent without   │
-│  any memory system re-reading context each prompt.      │
 └─────────────────────────────────────────────────────────┘
+```
+
+If `.memory/baseline.json` doesn't exist (skill wasn't used for setup), show:
+
+```
+NOTE: No baseline captured. Run "go ham" to set up with baseline tracking,
+or create .memory/baseline.json manually with your old CLAUDE.md token count.
 ```
 
 ### Calculation Logic
