@@ -1,4 +1,5 @@
 import React from 'react';
+import InfoTip from './InfoTip.jsx';
 
 function formatTokens(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -46,6 +47,10 @@ export default function Sessions({ sessions }) {
 
   return (
     <div className="table-card">
+      <h3>
+        Session history
+        <InfoTip text={'Every Claude Code session in the selected period. Duration is wall-clock time. HAM shows whether hierarchical memory was active \u2014 ON sessions typically use fewer tokens and cost less. Cache Read is tokens Claude remembered from recent context instead of re-reading files.'} />
+      </h3>
       <table>
         <thead>
           <tr>

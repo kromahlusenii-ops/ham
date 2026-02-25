@@ -1,4 +1,5 @@
 import React from 'react';
+import InfoTip from './InfoTip.jsx';
 
 function formatTokens(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -21,7 +22,10 @@ export default function Directories({ directories }) {
   return (
     <>
       <div className="table-card">
-        <h3>Sessions by Directory</h3>
+        <h3>
+          Sessions by Directory
+          <InfoTip text={'How many Claude Code sessions touched each directory. Tall bars mean that directory sees heavy activity \u2014 a good candidate for its own CLAUDE.md if it doesn\u2019t have one yet.'} />
+        </h3>
         <div className="bar-chart">
           {directories.map(d => (
             <div key={d.directory} className="bar-row">
@@ -41,6 +45,10 @@ export default function Directories({ directories }) {
       </div>
 
       <div className="table-card">
+        <h3>
+          Directory breakdown
+          <InfoTip text={'Per-directory stats across all sessions. Sessions = how many sessions read files there. HAM On = sessions with HAM active. File Reads = total files Claude opened. Input Tokens = tokens sent to the model. Cost = estimated API spend for that directory.'} />
+        </h3>
         <table>
           <thead>
             <tr>

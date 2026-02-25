@@ -14,9 +14,30 @@ export async function checkContextHealth(projectPath, sessions) {
 
   await walkDirectory(projectPath, projectPath, dirTouchCounts, entries);
 
+  // Build set of paths that have their own CLAUDE.md
+  const coveredPaths = new Set(
+    entries.filter(e => e.hasClaude).map(e => e.path)
+  );
+
+  // Second pass: check parent coverage for red entries
+  for (const entry of entries) {
+    if (entry.status !== 'red') continue;
+
+    const parentPath = findCoveringParent(entry.path, coveredPaths);
+    if (parentPath !== null) {
+      const parentEntry = entries.find(e => e.path === parentPath);
+      entry.status = 'yellow';
+      entry.coveredBy = parentPath;
+      if (parentEntry) {
+        entry.lastModified = parentEntry.lastModified;
+        entry.fileSize = parentEntry.fileSize;
+      }
+    }
+  }
+
   return entries.sort((a, b) => {
-    const statusOrder = { red: 0, amber: 1, green: 2 };
-    return (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
+    const statusOrder = { green: 0, yellow: 1, amber: 2, red: 3 };
+    return (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4);
   });
 }
 
@@ -76,8 +97,25 @@ async function walkDirectory(dir, projectPath, dirTouchCounts, entries) {
 }
 
 /**
+ * Walk up path segments to find the nearest ancestor with a CLAUDE.md.
+ * Returns the ancestor's relative path, or null if none found.
+ */
+function findCoveringParent(relPath, coveredPaths) {
+  if (relPath === '.') return null;
+
+  const segments = relPath.split('/');
+  // Walk up from immediate parent to root
+  for (let i = segments.length - 1; i >= 0; i--) {
+    const ancestor = i === 0 ? '.' : segments.slice(0, i).join('/');
+    if (coveredPaths.has(ancestor)) return ancestor;
+  }
+  return null;
+}
+
+/**
  * Determine health status.
  * - Green: CLAUDE.md exists and is recent relative to session activity
+ * - Yellow: Covered by a parent CLAUDE.md (set in second pass)
  * - Amber: CLAUDE.md exists but 2+ sessions have touched this dir since last mod
  * - Red: No CLAUDE.md in a directory with source files
  */

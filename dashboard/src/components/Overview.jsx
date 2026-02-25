@@ -123,7 +123,13 @@ export default function Overview({ stats, daily, health }) {
         <div className="health-section">
           <div className="health-title">
             Context file health
-            <InfoTip text={'Each directory with source code should have a CLAUDE.md file \u2014 a short briefing doc that tells Claude what that folder does and how things work there. Green means the file exists and is recent. Amber means it exists but hasn\'t been updated in a while, so Claude might be working from outdated info. Red means no file exists \u2014 Claude has to figure out that folder from scratch every time.'} />
+            <InfoTip text={'Each directory with source code should have a CLAUDE.md file \u2014 a short briefing doc that tells Claude what that folder does and how things work there. Green = has its own CLAUDE.md. Yellow = covered by a parent CLAUDE.md. Amber = has a CLAUDE.md but it may be stale. Red = no coverage at all.'} />
+          </div>
+          <div className="health-legend">
+            <span className="health-legend-item"><span className="health-dot green" />Has CLAUDE.md</span>
+            <span className="health-legend-item"><span className="health-dot yellow" />Inherited</span>
+            <span className="health-legend-item"><span className="health-dot amber" />Stale</span>
+            <span className="health-legend-item"><span className="health-dot red" />Missing</span>
           </div>
           <div className="health-list">
             {health.map(h => (
@@ -132,6 +138,7 @@ export default function Overview({ stats, daily, health }) {
                 <span className="health-path">{h.path}/</span>
                 <span className={`health-meta ${h.status === 'green' ? '' : h.status}`}>
                   {h.status === 'red' && 'missing'}
+                  {h.status === 'yellow' && `inherited \u00b7 ${h.coveredBy}/`}
                   {h.status === 'amber' && `stale \u00b7 ${estimateTokens(h.fileSize)} tok`}
                   {h.status === 'green' && `${estimateTokens(h.fileSize)} tok \u00b7 ${timeAgo(h.lastModified)}`}
                 </span>
