@@ -58,6 +58,8 @@ Upload the skill folder through Settings → Skills.
 | **`go ham`** | Set up HAM in your project (auto-detects everything) |
 | **`HAM savings`** | Show token/cost savings report with transparent calculations |
 | **`HAM audit`** | Check health of your memory system |
+| **`HAM dashboard`** | Launch the web dashboard to visualize token usage and savings |
+| **`HAM sandwich`** | Same as above, but more fun to say |
 
 ### Quick Start
 
@@ -126,6 +128,32 @@ MyApp/
 ```
 
 Supported platforms: **Web (Next.js, Nuxt, SvelteKit, etc.)**, **iOS (Swift/SwiftUI)**, **Android (Kotlin/Compose)**, **Flutter**, **React Native**, **Python**, **Rust**, **Go**, and any codebase organized into directories.
+
+## Dashboard
+
+Say `HAM dashboard` (or `HAM sandwich`) to launch an interactive web dashboard at `http://localhost:7777` that visualizes your actual Claude Code session data.
+
+The dashboard shows:
+
+- **Token savings** — estimated tokens and cost saved by HAM, comparing HAM-on vs HAM-off sessions
+- **Personalized insights** — AI-generated analysis of your usage patterns, cache efficiency, and coverage gaps
+- **Daily trends** — charts of input tokens, cache reads, and cost over time
+- **Directory breakdown** — which directories you work in most and their HAM adoption
+- **Session history** — every session with model, duration, token counts, and HAM status
+- **Context health** — which directories have `CLAUDE.md` files (green), which are stale (amber), and which are missing them (red)
+
+Data is parsed directly from Claude Code's session JSONL files at `~/.claude/projects/` — no external services, no database.
+
+### Manual launch
+
+If you want to run the dashboard outside of Claude Code:
+
+```bash
+# From your project directory
+node ~/.claude/skills/ham/dashboard/launch.js [--port 8080]
+```
+
+The launcher auto-installs dependencies and builds the frontend on first run. Default port is 7777.
 
 ## Self-Maintaining
 
