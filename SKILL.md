@@ -1,6 +1,6 @@
 ---
 name: ham
-description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "HAM savings", "HAM stats", "HAM dashboard", or "HAM sandwich".
+description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham route", "HAM savings", "HAM stats", "HAM dashboard", or "HAM sandwich".
 ---
 
 # HAM (Hierarchical Agent Memory)
@@ -57,7 +57,17 @@ project/
 ```
 
 For greenfield: only create root + .memory/
-For brownfield: also create subdirectory CLAUDE.md files
+For brownfield: also create subdirectory CLAUDE.md files, then generate a `## Context Routing` section in root CLAUDE.md listing all created subdirectory CLAUDE.md files:
+
+```markdown
+## Context Routing
+
+→ api: src/api/CLAUDE.md
+→ components: src/components/CLAUDE.md
+→ db: src/db/CLAUDE.md
+```
+
+Each entry maps a work domain label (derived from directory name) to its CLAUDE.md path. This acts as a positional index — the agent reads root and immediately knows which sub-context to load.
 
 ### Step 3: Capture Baseline
 
@@ -231,8 +241,8 @@ Embed in every root CLAUDE.md:
 ## Agent Memory System
 
 ### Before Working
-- Read this file for global context
-- Read target directory's CLAUDE.md before changes
+- Read this file for global context → follow Context Routing to load the relevant subdirectory CLAUDE.md
+- If no Context Routing section, read target directory's CLAUDE.md before changes
 - Check .memory/decisions.md before architectural changes
 - Check .memory/patterns.md before implementing common functionality
 - Check if a memory audit is due: read `.memory/audit-log.md` for the last audit date. If 14+ days have passed OR 10+ session files in `.memory/sessions/` are dated after the last audit, suggest: "It's been [N days/sessions] since the last memory audit. Run one? (say 'HAM audit' or skip)". Do not repeat if already suggested this session. If `audit-log.md` is missing, treat as never audited.
@@ -286,6 +296,30 @@ After presenting results:
 - If `.memory/audit-log.md` doesn't exist, create it from the template in `references/templates.md`.
 - Append an entry to `.memory/audit-log.md` with the date, number of issues found, and a one-line summary.
 - If the table exceeds 5 entries, remove the oldest row (keeping the header).
+
+## HAM Route Command
+
+**Trigger:** "ham route"
+
+When user runs this command, add or update the Context Routing section in root CLAUDE.md:
+
+1. **Scan tree** — find all existing CLAUDE.md files (excluding root)
+2. **Build routing entries** — for each, create: `→ [label]: [relative/path/to/CLAUDE.md]`
+   - Label is derived from the directory name (e.g., `src/api/CLAUDE.md` → `api`)
+   - For nested paths, use the most specific directory name
+3. **Update root CLAUDE.md:**
+   - If no `## Context Routing` section exists → append it after the last existing section
+   - If section exists → diff and show additions only (new CLAUDE.md files found since last route)
+4. **Safety rules:**
+   - Never remove existing routing entries (directories may have been deleted but could return)
+   - Never modify any content outside the `## Context Routing` section
+   - If root CLAUDE.md doesn't exist, tell the user to run `go ham` first
+
+Output after completion:
+```
+Context Routing updated in CLAUDE.md.
+[N] routes configured → agent will follow these to load subdirectory context.
+```
 
 ## HAM Dashboard Command
 

@@ -234,7 +234,7 @@ body {
 /* Metric cards */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-card);
@@ -574,6 +574,50 @@ tr:hover td {
   color: var(--text-muted);
 }
 
+/* Routing badge */
+.routing-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.routing-badge.routed {
+  background: rgba(68, 170, 153, 0.12);
+  color: var(--green);
+}
+
+.routing-badge.likely {
+  background: rgba(204, 153, 0, 0.12);
+  color: var(--amber);
+}
+
+.routing-badge.unrouted {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+}
+
+/* Routing notice */
+.routing-notice {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.routing-notice code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
 /* Empty state */
 .empty-state {
   text-align: center;
@@ -655,6 +699,21 @@ tr:hover td {
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .metric-card:nth-child(2) {
+    border-right: none;
+  }
+
+  .metric-card:nth-child(1),
+  .metric-card:nth-child(2) {
+    border-bottom: 1px solid var(--border);
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard {
     padding: 20px;

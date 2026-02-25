@@ -176,6 +176,12 @@ export default function Overview({ stats, daily, health }) {
           sub={`${stats.hamOffCount} without HAM`}
           info={'Each session, Claude reads files to understand your code. Fewer reads per session usually means Claude already has what it needs from your CLAUDE.md files \u2014 like having a good table of contents instead of flipping through every page.'}
         />
+        <MetricCard
+          label="Sessions Routed"
+          value={`${stats.routedPercent}%`}
+          sub={`${stats.routedCount + stats.likelyRoutedCount} of ${stats.totalSessions} sessions`}
+          info={'Context Routing maps work domains to subdirectory context files in your root CLAUDE.md. When the agent reads root and immediately follows a route to the right sub-context, it skips scanning sibling directories. Higher routing means less wasted token spend on irrelevant context.'}
+        />
       </div>
 
       <div className="chart-section">
@@ -236,6 +242,9 @@ export default function Overview({ stats, daily, health }) {
               <span className="health-legend-item"><span className="health-dot amber" />Stale</span>
               <span className="health-legend-item"><span className="health-dot red" />Missing</span>
             </div>
+            {!stats.routedCount && !stats.likelyRoutedCount && stats.totalSessions > 0 && (
+              <div className="routing-notice">Context routing not configured. Run <code>ham route</code> to add a routing section to your root CLAUDE.md.</div>
+            )}
             <div className="health-list">
               <HealthTree tree={tree} />
             </div>

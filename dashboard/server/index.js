@@ -99,6 +99,7 @@ async function handleApi(pathname, params, res) {
             cacheReadTokens: s.cacheReadTokens,
             fileReads: s.fileReads.length,
             isHamOn: s.isHamOn,
+            routingStatus: s.routingStatus,
             primaryDirectory: s.primaryDirectory,
             messageCount: s.messageCount,
             toolCallCount: s.toolCallCount,

@@ -36,6 +36,21 @@ Three layers:
 
 The key: the operating instructions in the root file tell the agent to **create new `CLAUDE.md` files as it creates new directories**, and to **update existing files when it introduces new patterns or decisions**. The system is self-maintaining.
 
+### Context Routing
+
+The root `CLAUDE.md` includes a `## Context Routing` section that acts as a positional index — mapping work domains to their subdirectory context files:
+
+```markdown
+## Context Routing
+→ api: src/api/CLAUDE.md
+→ components: src/components/CLAUDE.md
+→ db: src/db/CLAUDE.md
+```
+
+Without routing, the agent discovers CLAUDE.md files by walking the directory tree, burning tokens on scanning and risking missed context in sibling directories. With routing, the agent reads root (~200 tokens) and immediately knows which sub-context to load — no traversal needed.
+
+Run `ham route` to generate or update routing entries based on your existing CLAUDE.md files.
+
 ## Installation
 
 ### Manual Installation
@@ -49,6 +64,14 @@ git clone https://github.com/kromahlusenii-ops/ham.git ~/.claude/skills/ham
 
 Upload the skill folder through Settings → Skills.
 
+### Updating
+
+```bash
+cd ~/.claude/skills/ham && git pull
+```
+
+The dashboard auto-detects when source files are newer than the last build and rebuilds on next launch — no manual `npm run build` needed. If an update is available when you launch the dashboard, you'll see a notice in the terminal.
+
 ## Usage
 
 ### Commands
@@ -56,6 +79,7 @@ Upload the skill folder through Settings → Skills.
 | Command | What it does |
 |---|---|
 | **`go ham`** | Set up HAM in your project (auto-detects everything) |
+| **`ham route`** | Add or update Context Routing in root CLAUDE.md |
 | **`HAM savings`** | Show token/cost savings report with transparent calculations |
 | **`HAM audit`** | Check health of your memory system |
 | **`HAM dashboard`** | Launch the web dashboard to visualize token usage and savings |
@@ -139,8 +163,9 @@ The dashboard shows:
 - **Personalized insights** — AI-generated analysis of your usage patterns, cache efficiency, and coverage gaps
 - **Daily trends** — charts of input tokens, cache reads, and cost over time
 - **Directory breakdown** — which directories you work in most and their HAM adoption
-- **Session history** — every session with model, duration, token counts, and HAM status
+- **Session history** — every session with model, duration, token counts, HAM status, and routing status
 - **Context health** — which directories have `CLAUDE.md` files (green), which are stale (amber), and which are missing them (red)
+- **Routing status** — whether sessions followed Context Routing to the right sub-context
 
 Data is parsed directly from Claude Code's session JSONL files at `~/.claude/projects/` — no external services, no database.
 
@@ -189,6 +214,10 @@ Audit results are logged in `.memory/audit-log.md` (last 5 entries kept).
 - **Cursor** — Compatible. Rename files to `.cursorrules` or configure Cursor to read `CLAUDE.md`.
 - **GitHub Copilot** — Compatible via `.github/copilot-instructions.md` for the root file.
 - **Any agent that reads markdown context files** — The pattern is tool-agnostic.
+
+## Research
+
+HAM's approach is informed by research on hierarchical memory retrieval for LLM agents. Sun & Zeng (2025) demonstrate in H-MEM that hierarchical retrieval with guided routing consistently outperforms flat retrieval in agentic settings — the agent benefits from a structured index that narrows the search space before loading detailed context. Context Routing in HAM applies this principle: the root file acts as a routing index, and subdirectory files provide the scoped detail.
 
 ## License
 

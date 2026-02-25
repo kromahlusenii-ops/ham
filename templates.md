@@ -35,6 +35,11 @@ Each root template has three sections: Stack, Critical Rules, and the Operating 
 - All DB changes go through migrations
 - Use server actions for mutations, not API routes
 - Types live in /src/types — never inline complex types
+
+## Context Routing
+→ api: src/api/CLAUDE.md
+→ components: src/components/CLAUDE.md
+→ db: src/db/CLAUDE.md
 ```
 
 ### iOS
@@ -57,6 +62,12 @@ Each root template has three sections: Stack, Critical Rules, and the Operating 
 - Never force-unwrap optionals outside of IBOutlets
 - All network calls go through Core/Networking — no direct URLSession
 - Run SwiftLint before committing
+
+## Context Routing
+→ auth: Features/Auth/CLAUDE.md
+→ networking: Core/Networking/CLAUDE.md
+→ persistence: Core/Persistence/CLAUDE.md
+→ ui: UI/CLAUDE.md
 ```
 
 ### Android
@@ -79,6 +90,12 @@ Each root template has three sections: Stack, Critical Rules, and the Operating 
 - ViewModels expose StateFlow, never LiveData in new code
 - All network calls go through repository layer — no direct Retrofit from ViewModels
 - Never store Context references in ViewModels
+
+## Context Routing
+→ auth: features/auth/CLAUDE.md
+→ home: features/home/CLAUDE.md
+→ data: core/data/CLAUDE.md
+→ network: core/network/CLAUDE.md
 ```
 
 ### Flutter
@@ -102,6 +119,12 @@ Each root template has three sections: Stack, Critical Rules, and the Operating 
 - Platform channels in lib/core/platform/ with method channel wrappers
 - No business logic in widgets — extract to providers/blocs/controllers
 - All models use freezed for immutability and JSON serialization
+
+## Context Routing
+→ auth: lib/features/auth/CLAUDE.md
+→ home: lib/features/home/CLAUDE.md
+→ core: lib/core/CLAUDE.md
+→ models: lib/models/CLAUDE.md
 ```
 
 ### React Native
@@ -124,6 +147,12 @@ Each root template has three sections: Stack, Critical Rules, and the Operating 
 - No inline styles — use StyleSheet.create or styled-components
 - Platform-specific code uses .ios.tsx/.android.tsx suffixes
 - Native modules must have both iOS and Android implementations before merging
+
+## Context Routing
+→ auth: src/features/auth/CLAUDE.md
+→ navigation: src/navigation/CLAUDE.md
+→ components: src/components/CLAUDE.md
+→ services: src/services/CLAUDE.md
 ```
 
 Target for all root files: under 250 tokens (~60 lines) including the Operating Instructions block.

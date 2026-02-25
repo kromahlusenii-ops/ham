@@ -54,7 +54,7 @@ export default function Layout({ tab, setTab, days, setDays, stats, children }) 
 
       {children.content}
 
-      <div className="footer">ham 0.1.0</div>
+      <div className="footer">ham 0.2.0</div>
     </div>
   );
 }

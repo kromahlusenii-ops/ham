@@ -1,4 +1,4 @@
-import { readdir, stat } from 'fs/promises';
+import { readdir, stat, readFile } from 'fs/promises';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
 import { join, basename, dirname, relative } from 'path';
@@ -57,6 +57,7 @@ async function parseOneSession(filePath, projectPath) {
     fileReads: [],        // all file paths read
     claudeMdReads: [],    // CLAUDE.md reads specifically
     isHamOn: false,
+    routingStatus: 'unrouted',
     primaryDirectory: null,
     messageCount: 0,
     toolCallCount: 0,
@@ -155,6 +156,9 @@ async function parseOneSession(filePath, projectPath) {
   // Attribute primary directory
   session.primaryDirectory = attributeDirectory(session.fileReads, projectPath);
 
+  // Determine routing status
+  session.routingStatus = await determineRoutingStatus(session.claudeMdReads, projectPath);
+
   return session;
 }
 
@@ -185,4 +189,63 @@ function attributeDirectory(fileReads, projectPath) {
   }
 
   return maxDir;
+}
+
+/**
+ * Determine context routing status for a session.
+ * Reads root CLAUDE.md from disk to check current routing config,
+ * then checks session's CLAUDE.md read sequence against listed routes.
+ */
+async function determineRoutingStatus(claudeMdReads, projectPath) {
+  const rootPath = join(projectPath, 'CLAUDE.md');
+
+  // Check if the session read the root CLAUDE.md
+  const rootRead = claudeMdReads.find(p => {
+    const rel = relative(projectPath, p);
+    return rel === 'CLAUDE.md';
+  });
+  if (!rootRead) return 'unrouted';
+
+  // Read root CLAUDE.md from disk to get current routing config
+  let rootContent;
+  try {
+    rootContent = await readFile(rootPath, 'utf-8');
+  } catch {
+    return 'unrouted';
+  }
+
+  // Parse ## Context Routing section
+  const routingMatch = rootContent.match(/## Context Routing\n([\s\S]*?)(?=\n##\s|\n$|$)/);
+  if (!routingMatch) return 'unrouted';
+
+  // Extract listed paths (lines matching → ...: path/to/CLAUDE.md)
+  const routeLines = routingMatch[1].match(/→\s*.+?:\s*(.+)/g);
+  if (!routeLines || routeLines.length === 0) return 'unrouted';
+
+  const listedPaths = routeLines.map(line => {
+    const pathMatch = line.match(/→\s*.+?:\s*(.+)/);
+    return pathMatch ? join(projectPath, pathMatch[1].trim()) : null;
+  }).filter(Boolean);
+
+  if (listedPaths.length === 0) return 'unrouted';
+
+  // Check CLAUDE.md read sequence after root
+  const rootIndex = claudeMdReads.indexOf(rootRead);
+  const afterRoot = claudeMdReads.slice(rootIndex + 1);
+
+  if (afterRoot.length === 0) return 'unrouted';
+
+  // Normalize paths for comparison
+  const normalize = p => p.replace(/\/+$/, '');
+  const listedNorm = new Set(listedPaths.map(normalize));
+
+  // Next read after root is a listed route → routed
+  if (listedNorm.has(normalize(afterRoot[0]))) return 'routed';
+
+  // A listed route appears later (not immediately) → likely_routed
+  for (const read of afterRoot) {
+    if (listedNorm.has(normalize(read))) return 'likely_routed';
+  }
+
+  return 'unrouted';
 }
