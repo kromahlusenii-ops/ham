@@ -7,7 +7,7 @@ function formatTokens(n) {
   return n.toString();
 }
 
-export default function Directories({ directories }) {
+export default function Directories({ directories, health }) {
   if (!directories || directories.length === 0) {
     return (
       <div className="empty-state">
@@ -18,6 +18,13 @@ export default function Directories({ directories }) {
   }
 
   const maxSessions = Math.max(...directories.map(d => d.sessions), 1);
+
+  const healthMap = {};
+  if (health) {
+    for (const h of health) {
+      healthMap[h.path] = h.status;
+    }
+  }
 
   return (
     <>
@@ -30,6 +37,7 @@ export default function Directories({ directories }) {
           {directories.map(d => (
             <div key={d.directory} className="bar-row">
               <span className="bar-label" title={d.directory}>
+                {healthMap[d.directory] && <span className={`health-dot ${healthMap[d.directory]}`} />}
                 {d.directory}
               </span>
               <div className="bar-track">
@@ -63,7 +71,10 @@ export default function Directories({ directories }) {
           <tbody>
             {directories.map(d => (
               <tr key={d.directory}>
-                <td className="mono">{d.directory}</td>
+                <td className="mono">
+                  {healthMap[d.directory] && <span className={`health-dot ${healthMap[d.directory]}`} style={{ width: 8, height: 8, marginRight: 8 }} />}
+                  {d.directory}
+                </td>
                 <td>{d.sessions}</td>
                 <td>{d.hamOnSessions}</td>
                 <td>{d.fileReads}</td>

@@ -50,7 +50,7 @@ export default function App() {
         <Overview stats={stats} daily={daily} health={health} />
       )}
       {tab === 'directories' && (
-        <Directories directories={directories} />
+        <Directories directories={directories} health={health} />
       )}
       {tab === 'sessions' && (
         <Sessions sessions={sessions} />
