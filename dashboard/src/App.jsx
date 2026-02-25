@@ -3,10 +3,11 @@ import Layout from './components/Layout.jsx';
 import Overview from './components/Overview.jsx';
 import Directories from './components/Directories.jsx';
 import Sessions from './components/Sessions.jsx';
+import Summary from './components/Summary.jsx';
 
 export default function App() {
   const [tab, setTab] = useState('overview');
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState(7);
   const [stats, setStats] = useState(null);
   const [daily, setDaily] = useState([]);
   const [directories, setDirectories] = useState([]);
@@ -37,25 +38,29 @@ export default function App() {
       .finally(() => setLoading(false));
   }, [days]);
 
-  return (
-    <Layout tab={tab} setTab={setTab} days={days} setDays={setDays}>
-      {loading ? (
-        <div className="empty-state">
-          <p>Loading session data...</p>
-        </div>
-      ) : (
-        <>
-          {tab === 'overview' && (
-            <Overview stats={stats} daily={daily} health={health} insights={insights} />
-          )}
-          {tab === 'directories' && (
-            <Directories directories={directories} />
-          )}
-          {tab === 'sessions' && (
-            <Sessions sessions={sessions} />
-          )}
-        </>
+  const summaryEl = !loading && insights ? <Summary insights={insights} /> : null;
+
+  const contentEl = loading ? (
+    <div className="empty-state">
+      <p>Loading session data...</p>
+    </div>
+  ) : (
+    <>
+      {tab === 'overview' && (
+        <Overview stats={stats} daily={daily} health={health} />
       )}
+      {tab === 'directories' && (
+        <Directories directories={directories} />
+      )}
+      {tab === 'sessions' && (
+        <Sessions sessions={sessions} />
+      )}
+    </>
+  );
+
+  return (
+    <Layout tab={tab} setTab={setTab} days={days} setDays={setDays} stats={stats}>
+      {{ summary: summaryEl, content: contentEl }}
     </Layout>
   );
 }

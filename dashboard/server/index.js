@@ -71,6 +71,7 @@ async function handleApi(pathname, params, res) {
     switch (pathname) {
       case '/api/stats':
         data = calculateStats(cachedSessions, days);
+        data.projectName = projectPath.split('/').pop();
         break;
 
       case '/api/daily':

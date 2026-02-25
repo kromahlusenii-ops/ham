@@ -8,41 +8,53 @@ const TABS = [
 
 const TIME_OPTIONS = [7, 14, 30];
 
-export default function Layout({ tab, setTab, days, setDays, children }) {
+export default function Layout({ tab, setTab, days, setDays, stats, children }) {
+  const projectName = stats?.projectName || 'project';
+  const sessionCount = stats?.totalSessions ?? '-';
+
   return (
     <div className="dashboard">
       <header className="header">
-        <h1>
-          <span>HAM</span> Dashboard
-        </h1>
+        <div className="header-left">
+          <span className="header-label">HAM</span>
+          <span className="header-project">{projectName}</span>
+        </div>
         <div className="header-right">
-          <div className="time-filter">
-            {TIME_OPTIONS.map(d => (
-              <button
-                key={d}
-                className={`time-btn ${days === d ? 'active' : ''}`}
-                onClick={() => setDays(d)}
-              >
-                {d}d
-              </button>
-            ))}
-          </div>
+          {sessionCount} sessions &middot; Claude Code<br />
+          {days} day window
         </div>
       </header>
 
-      <nav className="tabs">
-        {TABS.map(t => (
-          <button
-            key={t.key}
-            className={`tab ${tab === t.key ? 'active' : ''}`}
-            onClick={() => setTab(t.key)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
+      {children.summary}
 
-      {children}
+      <div className="tab-bar">
+        <nav className="tabs">
+          {TABS.map(t => (
+            <button
+              key={t.key}
+              className={`tab ${tab === t.key ? 'active' : ''}`}
+              onClick={() => setTab(t.key)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+        <div className="time-filter">
+          {TIME_OPTIONS.map(d => (
+            <button
+              key={d}
+              className={`time-btn ${days === d ? 'active' : ''}`}
+              onClick={() => setDays(d)}
+            >
+              {d}d
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {children.content}
+
+      <div className="footer">ham 0.1.0</div>
     </div>
   );
 }
