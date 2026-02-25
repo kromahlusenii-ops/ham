@@ -1,6 +1,6 @@
 ---
 name: ham
-description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "HAM savings", or "HAM stats".
+description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "HAM savings", "HAM stats", "HAM dashboard", or "HAM sandwich".
 ---
 
 # HAM (Hierarchical Agent Memory)
@@ -286,6 +286,46 @@ After presenting results:
 - If `.memory/audit-log.md` doesn't exist, create it from the template in `references/templates.md`.
 - Append an entry to `.memory/audit-log.md` with the date, number of issues found, and a one-line summary.
 - If the table exceeds 5 entries, remove the oldest row (keeping the header).
+
+## HAM Dashboard Command
+
+**Trigger:** "HAM dashboard" or "HAM sandwich"
+
+When user runs this command, launch the interactive web dashboard that visualizes token savings, session history, directory coverage, and context file health.
+
+### What to do
+
+1. **Locate the dashboard** — the dashboard lives at `dashboard/` relative to the HAM skill installation directory (this repo).
+2. **Launch it** — run the following command from the **project root** (the user's current working directory):
+
+```bash
+node <path-to-ham-repo>/dashboard/launch.js --port 7777
+```
+
+The `launch.js` script auto-handles `npm install` and `npm run build` on first run — no manual setup needed.
+
+3. **Tell the user** — output:
+
+```
+HAM Dashboard launching...
+
+Open http://localhost:7777 in your browser.
+
+The dashboard parses your Claude Code session data from
+~/.claude/projects/ and shows:
+  - Token savings (HAM-on vs HAM-off sessions)
+  - Daily token and cost trends
+  - Per-directory breakdown
+  - Context file health (CLAUDE.md coverage)
+
+Press Ctrl+C to stop the server.
+```
+
+### Notes
+- The dashboard reads session JSONL files from `~/.claude/projects/<encoded-project-path>/`
+- Data is parsed into memory at startup — no database needed
+- Default port is 7777, configurable via `--port`
+- The server must be run from the user's project directory (it uses `process.cwd()` to determine which project's sessions to load)
 
 ## Templates
 
