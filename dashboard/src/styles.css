@@ -477,7 +477,7 @@ tr:hover td {
 }
 
 .health-dot.green { background: var(--green); }
-.health-dot.yellow { background: #da0; }
+.health-dot.yellow { background: #5b9bd5; }
 .health-dot.amber { background: var(--amber); }
 .health-dot.red { background: var(--red); }
 
@@ -496,7 +496,7 @@ tr:hover td {
 }
 
 .health-meta.yellow {
-  color: #da0;
+  color: #5b9bd5;
 }
 
 .health-meta.amber {
