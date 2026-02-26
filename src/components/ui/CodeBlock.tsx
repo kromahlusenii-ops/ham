@@ -10,7 +10,7 @@ export default function CodeBlock({
   className = "",
 }: CodeBlockProps) {
   return (
-    <div className={`overflow-hidden rounded-lg border border-stone bg-snow ${className}`}>
+    <div className={`overflow-x-auto rounded-lg border border-stone bg-snow ${className}`}>
       {title && (
         <div className="border-b border-stone px-4 py-2">
           <span className="font-mono text-[11px] text-ash">{title}</span>
