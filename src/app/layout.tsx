@@ -14,7 +14,11 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://hamprotocol.com"),
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "https://ham-kohl.vercel.app"
+  ),
   title: "HAM — Hierarchical Agent Memory",
   description:
     "Scoped memory files that cut context bloat by 50%. Fewer tokens, lower cost, smaller carbon footprint.",
