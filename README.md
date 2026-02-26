@@ -159,7 +159,6 @@ The dashboard auto-detects when source files are newer than the last build and r
 | Command | What it does |
 |---|---|
 | **`go ham`** | Set up HAM in your project (auto-detects everything) |
-| **`ham route`** | Add or update Context Routing in root CLAUDE.md |
 | **`HAM savings`** | Show token/cost savings report with transparent calculations |
 | **`HAM audit`** | Check health of your memory system |
 | **`HAM dashboard`** | Launch the web dashboard to visualize token usage and savings |
@@ -175,9 +174,8 @@ The dashboard shows:
 - **Personalized insights** — AI-generated analysis of your usage patterns, cache efficiency, and coverage gaps
 - **Daily trends** — charts of input tokens, cache reads, and cost over time
 - **Directory breakdown** — which directories you work in most and their HAM adoption
-- **Session history** — every session with model, duration, token counts, HAM status, and routing status
+- **Session history** — every session with model, duration, token counts, and HAM status
 - **Context health** — which directories have `CLAUDE.md` files (green), which are stale (amber), and which are missing them (red)
-- **Routing status** — whether sessions followed Context Routing to the right sub-context
 
 Data is parsed directly from Claude Code's session JSONL files at `~/.claude/projects/` — no external services, no database.
 

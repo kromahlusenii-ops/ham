@@ -32,17 +32,6 @@ export function generateInsights(stats, health, daily, days) {
     insights.push(`HAM is active in ${stats.coveragePercent}% of sessions, saving an estimated ${fmtTokens(stats.totalTokensSaved)} tokens ($${stats.totalCostSaved.toFixed(2)}). More CLAUDE.md coverage = more drawers with labels = less time searching.`);
   }
 
-  // Routing
-  if (stats.routedPercent !== undefined) {
-    if (stats.routedCount + stats.likelyRoutedCount === 0 && stats.totalSessions > 0) {
-      insights.push(`No sessions are using Context Routing yet. Without it, Claude has to scan your directory tree like checking every floor of a building to find the right office. Add a routing section to your root CLAUDE.md (run "ham route") and Claude will take the elevator straight there.`);
-    } else if (stats.routedPercent >= 70) {
-      insights.push(`${stats.routedPercent}% of sessions follow Context Routing — Claude is reading the directory on the wall and going straight to the right office instead of wandering floor to floor.`);
-    } else if (stats.routedPercent > 0) {
-      insights.push(`${stats.routedPercent}% of sessions follow Context Routing. More routes means Claude spends less time scanning for context and more time on your actual task — like posting a directory in a building lobby so visitors don't wander.`);
-    }
-  }
-
   // Cache efficiency — the short-term memory analogy
   if (stats.totalCacheRead > 0) {
     const cacheRatio = stats.totalCacheRead / (stats.totalInputTokens + stats.totalCacheRead);
@@ -140,42 +129,6 @@ export function generateStructuredInsights(stats, health, daily, days) {
         detail: `${stats.coveragePercent}% of sessions are using HAM, saving ~${fmtTokens(stats.totalTokensSaved)} tokens ($${stats.totalCostSaved.toFixed(2)}).`,
         action: null,
         data: { hamOnCount: stats.hamOnCount, totalSessions: stats.totalSessions, coveragePercent: stats.coveragePercent, tokensSaved: stats.totalTokensSaved },
-      });
-    }
-  }
-
-  // Context routing
-  if (stats.routedPercent !== undefined && stats.totalSessions > 0) {
-    const routedTotal = (stats.routedCount || 0) + (stats.likelyRoutedCount || 0);
-    if (routedTotal === 0) {
-      items.push({
-        category: 'context_routing',
-        severity: 'high',
-        type: 'action',
-        title: 'No sessions using Context Routing',
-        detail: `0 of ${stats.totalSessions} sessions follow Context Routing.`,
-        action: 'Add a routing section to your root CLAUDE.md (run "ham route").',
-        data: { routedCount: 0, totalSessions: stats.totalSessions, routedPercent: 0 },
-      });
-    } else if (stats.routedPercent < 70) {
-      items.push({
-        category: 'context_routing',
-        severity: 'low',
-        type: 'observation',
-        title: 'Partial Context Routing',
-        detail: `${stats.routedPercent}% of sessions follow Context Routing.`,
-        action: null,
-        data: { routedCount: routedTotal, totalSessions: stats.totalSessions, routedPercent: stats.routedPercent },
-      });
-    } else {
-      items.push({
-        category: 'context_routing',
-        severity: 'low',
-        type: 'positive',
-        title: 'Strong Context Routing',
-        detail: `${stats.routedPercent}% of sessions follow Context Routing.`,
-        action: null,
-        data: { routedCount: routedTotal, totalSessions: stats.totalSessions, routedPercent: stats.routedPercent },
       });
     }
   }

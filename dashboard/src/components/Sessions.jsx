@@ -49,7 +49,7 @@ export default function Sessions({ sessions }) {
     <div className="table-card">
       <h3>
         Session history
-        <InfoTip text={'Every Claude Code session in the selected period. Duration is wall-clock time. HAM shows whether hierarchical memory was active \u2014 ON sessions typically use fewer tokens and cost less. Routing shows whether the agent followed Context Routing to load the right subdirectory context. Cache Read is tokens Claude remembered from recent context instead of re-reading files.'} />
+        <InfoTip text={'Every Claude Code session in the selected period. Duration is wall-clock time. HAM shows whether hierarchical memory was active \u2014 ON sessions typically use fewer tokens and cost less. Cache Read is tokens Claude remembered from recent context instead of re-reading files.'} />
       </h3>
       <table>
         <thead>
@@ -58,7 +58,6 @@ export default function Sessions({ sessions }) {
             <th>Duration</th>
             <th>Model</th>
             <th>HAM</th>
-            <th>Routing</th>
             <th>Messages</th>
             <th>Tools</th>
             <th>File Reads</th>
@@ -76,11 +75,6 @@ export default function Sessions({ sessions }) {
               <td>
                 <span className={`ham-badge ${s.isHamOn ? 'on' : 'off'}`}>
                   {s.isHamOn ? 'ON' : 'OFF'}
-                </span>
-              </td>
-              <td>
-                <span className={`routing-badge ${s.routingStatus === 'routed' ? 'routed' : s.routingStatus === 'likely_routed' ? 'likely' : 'unrouted'}`}>
-                  {s.routingStatus === 'routed' ? 'Routed' : s.routingStatus === 'likely_routed' ? 'Likely' : 'Unrouted'}
                 </span>
               </td>
               <td>{s.messageCount}</td>

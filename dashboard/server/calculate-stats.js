@@ -32,12 +32,6 @@ export function calculateStats(sessions, days = 30) {
     ? Math.round((hamOnCount / totalSessions) * 100)
     : 0;
 
-  const routedCount = filtered.filter(s => s.routingStatus === 'routed').length;
-  const likelyRoutedCount = filtered.filter(s => s.routingStatus === 'likely_routed').length;
-  const unroutedCount = filtered.filter(s => s.routingStatus === 'unrouted').length;
-  const routedPercent = totalSessions > 0
-    ? Math.round(((routedCount + likelyRoutedCount) / totalSessions) * 100) : 0;
-
   const totalInputTokens = filtered.reduce((sum, s) => sum + s.inputTokens, 0);
   const totalOutputTokens = filtered.reduce((sum, s) => sum + s.outputTokens, 0);
   const totalCacheRead = filtered.reduce((sum, s) => sum + s.cacheReadTokens, 0);
@@ -55,10 +49,6 @@ export function calculateStats(sessions, days = 30) {
     hamOnCount,
     hamOffCount,
     coveragePercent,
-    routedCount,
-    likelyRoutedCount,
-    unroutedCount,
-    routedPercent,
     totalTokensSaved,
     totalCostSaved: Math.round(totalCostSaved * 100) / 100,
     totalInputTokens,
