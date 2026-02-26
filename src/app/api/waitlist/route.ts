@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import sgMail from "@sendgrid/mail";
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+if (!SENDGRID_API_KEY) {
+  throw new Error("SENDGRID_API_KEY is not defined in environment variables.");
+}
+sgMail.setApiKey(SENDGRID_API_KEY);
 
-const FROM = process.env.EMAIL_FROM!;
-const NOTIFY = process.env.NOTIFY_EMAIL!;
+const FROM = process.env.EMAIL_FROM;
+if (!FROM) {
+  throw new Error("EMAIL_FROM is not defined in environment variables.");
+}
+
+const NOTIFY = process.env.NOTIFY_EMAIL;
+if (!NOTIFY) {
+  throw new Error("NOTIFY_EMAIL is not defined in environment variables.");
+}
 
 function confirmationEmail(email: string) {
   return {
@@ -77,7 +88,8 @@ export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
 
-    if (!email || typeof email !== "string" || !email.includes("@")) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || typeof email !== "string" || !emailRegex.test(email)) {
       return NextResponse.json({ error: "Valid email required" }, { status: 400 });
     }
 
