@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="ham.png" alt="HAM" width="400">
+</p>
+
 # 🟢 HAM — Hierarchical Agent Memory
 
 **Fewer tokens. Greener AI.**
