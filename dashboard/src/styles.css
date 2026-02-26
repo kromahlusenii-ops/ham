@@ -751,6 +751,151 @@ tr:hover td {
   opacity: 0.7;
 }
 
+/* Efficiency tab — weekly grid */
+.weekly-grid {
+  padding: 0 20px 16px;
+}
+
+.weekly-row {
+  display: grid;
+  grid-template-columns: 90px repeat(7, 1fr);
+  text-align: center;
+}
+
+.weekly-row.weekly-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.weekly-cell {
+  padding: 6px 4px;
+  font-size: 13px;
+  font-family: var(--mono);
+}
+
+.weekly-cell.day-empty {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.weekly-row-label {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Efficiency tab — file status badges */
+.file-status {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.file-status-ok {
+  background: rgba(68, 170, 153, 0.12);
+  color: var(--green);
+}
+
+.file-status-consider_splitting {
+  background: rgba(204, 153, 0, 0.1);
+  color: var(--amber);
+}
+
+.file-status-split_this {
+  background: rgba(204, 68, 68, 0.1);
+  color: var(--red);
+}
+
+.file-status-stale {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+}
+
+/* Efficiency tab — section title */
+.section-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* Efficiency tab — cumulative stats grid */
+.cumulative-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.cumulative-item {
+  text-align: center;
+}
+
+.cumulative-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.cumulative-value {
+  font-size: 14px;
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+/* Efficiency tab — fact card */
+.fact-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  padding: 24px 28px;
+  margin-bottom: 32px;
+}
+
+.fact-header {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+
+.fact-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.fact-source {
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.fact-hamlabel {
+  font-size: 13px;
+  color: var(--green);
+  font-weight: 500;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .metrics-grid {

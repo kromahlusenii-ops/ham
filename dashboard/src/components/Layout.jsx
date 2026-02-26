@@ -5,6 +5,7 @@ const TABS = [
   { key: 'directories', label: 'Directories' },
   { key: 'sessions', label: 'Sessions' },
   { key: 'insights', label: 'Insights' },
+  { key: 'efficiency', label: 'Efficiency' },
 ];
 
 const TIME_OPTIONS = [7, 14, 30];

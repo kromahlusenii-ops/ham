@@ -1,6 +1,6 @@
 ---
 name: ham
-description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", or "HAM insights".
+description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
 ---
 
 # HAM (Hierarchical Agent Memory)
@@ -434,6 +434,25 @@ Review periodically. Confirm → move to decisions/patterns. Reject → delete.
 
 ---
 ```
+
+## HAM Carbon Command
+
+**Trigger:** "HAM carbon"
+
+When user runs this command, show energy and carbon efficiency data.
+
+### What to do
+
+1. **Run the CLI** — execute from the user's project directory:
+
+```bash
+node <path-to-ham-repo>/dashboard/carbon-cli.js [--last] [--days 30]
+```
+
+2. **Display results** — show the CLI output to the user.
+
+- Default: quick 3-line summary (total saved, today, last session)
+- `--last`: detailed breakdown of most recent session with per-file stats
 
 ## How We Estimate Savings (Transparency)
 

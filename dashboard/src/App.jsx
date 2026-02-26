@@ -4,6 +4,7 @@ import Overview from './components/Overview.jsx';
 import Directories from './components/Directories.jsx';
 import Sessions from './components/Sessions.jsx';
 import Insights from './components/Insights.jsx';
+import Efficiency from './components/Efficiency.jsx';
 import Summary from './components/Summary.jsx';
 
 export default function App() {
@@ -16,6 +17,10 @@ export default function App() {
   const [health, setHealth] = useState([]);
   const [insights, setInsights] = useState(null);
   const [structuredInsights, setStructuredInsights] = useState(null);
+  const [carbon, setCarbon] = useState(null);
+  const [carbonDaily, setCarbonDaily] = useState([]);
+  const [carbonSessions, setCarbonSessions] = useState([]);
+  const [carbonFiles, setCarbonFiles] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,8 +33,12 @@ export default function App() {
       fetch('/api/health').then(r => r.json()),
       fetch(`/api/insights?days=${days}`).then(r => r.json()),
       fetch(`/api/insights/structured?days=${days}`).then(r => r.json()),
+      fetch(`/api/carbon?days=${days}`).then(r => r.json()),
+      fetch(`/api/carbon/daily?days=${days}`).then(r => r.json()),
+      fetch(`/api/carbon/sessions?days=${days}`).then(r => r.json()),
+      fetch(`/api/carbon/files?days=${days}`).then(r => r.json()),
     ])
-      .then(([s, d, dir, sess, h, ins, sIns]) => {
+      .then(([s, d, dir, sess, h, ins, sIns, carb, carbD, carbS, carbF]) => {
         setStats(s);
         setDaily(d);
         setDirectories(dir);
@@ -37,6 +46,10 @@ export default function App() {
         setHealth(h);
         setInsights(ins);
         setStructuredInsights(sIns);
+        setCarbon(carb);
+        setCarbonDaily(carbD);
+        setCarbonSessions(carbS);
+        setCarbonFiles(carbF);
       })
       .catch(err => console.error('Failed to fetch data:', err))
       .finally(() => setLoading(false));
@@ -51,7 +64,7 @@ export default function App() {
   ) : (
     <>
       {tab === 'overview' && (
-        <Overview stats={stats} daily={daily} health={health} />
+        <Overview stats={stats} daily={daily} health={health} carbon={carbon} />
       )}
       {tab === 'directories' && (
         <Directories directories={directories} health={health} />
@@ -61,6 +74,9 @@ export default function App() {
       )}
       {tab === 'insights' && (
         <Insights insights={structuredInsights} />
+      )}
+      {tab === 'efficiency' && (
+        <Efficiency carbon={carbon} daily={carbonDaily} sessions={carbonSessions} files={carbonFiles} />
       )}
     </>
   );

@@ -129,7 +129,13 @@ function HealthTree({ tree }) {
   return <>{tree.map(node => renderNode(node, 0))}</>;
 }
 
-export default function Overview({ stats, daily, health }) {
+function formatCO2e(grams) {
+  if (grams < 1) return '< 1g';
+  if (grams < 1000) return Math.round(grams) + 'g';
+  return (grams / 1000).toFixed(1) + ' kg';
+}
+
+export default function Overview({ stats, daily, health, carbon }) {
   if (!stats) {
     return (
       <div className="empty-state">
@@ -161,7 +167,11 @@ export default function Overview({ stats, daily, health }) {
         <MetricCard
           label="Tokens Saved"
           value={formatTokens(stats.totalTokensSaved)}
-          sub={savingsPct > 0 ? `${savingsPct}% reduction` : 'no HAM sessions yet'}
+          sub={savingsPct > 0
+            ? `${savingsPct}% reduction` + (carbon?.totalCO2e?.saved_grams > 0
+                ? ` \u00b7 ~${formatCO2e(carbon.totalCO2e.saved_grams)} CO\u2082e saved`
+                : '')
+            : 'no HAM sessions yet'}
           info={'Tokens are the "words" Claude reads each time you send a message. Without HAM, Claude re-reads your whole project context every prompt \u2014 like re-reading an entire textbook to answer one question. HAM gives Claude a cheat sheet for each folder, so it only reads what it needs. This number is how many tokens you skipped by having those cheat sheets.'}
         />
         <MetricCard

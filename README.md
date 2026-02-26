@@ -119,6 +119,7 @@ HAM follows three principles:
 | **`HAM audit`** | Check health of your memory system |
 | **`HAM dashboard`** | Launch the web dashboard to visualize token usage and savings |
 | **`HAM sandwich`** | Same as above, but more fun to say |
+| **`HAM carbon`** | Show energy and carbon efficiency stats |
 
 ## Dashboard
 

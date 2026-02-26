@@ -6,6 +6,7 @@ import { parseSessions } from './parse-sessions.js';
 import { calculateStats, calculateDaily, calculateDirectories } from './calculate-stats.js';
 import { checkContextHealth } from './context-health.js';
 import { generateInsights, generateStructuredInsights } from './insights.js';
+import { calculateCarbon, calculateCarbonDaily, calculateCarbonSessions, calculateCarbonFiles } from './carbon.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const DIST_DIR = join(__dirname, '..', 'dist');
@@ -123,6 +124,30 @@ async function handleApi(pathname, params, res) {
         const sHealth = await checkContextHealth(projectPath, cachedSessions);
         const sDaily = calculateDaily(cachedSessions, days);
         data = generateStructuredInsights(sStats, sHealth, sDaily, days);
+        break;
+      }
+
+      case '/api/carbon': {
+        const carbonHealth = await checkContextHealth(projectPath, cachedSessions);
+        data = calculateCarbon(cachedSessions, days, projectPath, carbonHealth);
+        break;
+      }
+
+      case '/api/carbon/daily': {
+        const cdHealth = await checkContextHealth(projectPath, cachedSessions);
+        data = calculateCarbonDaily(cachedSessions, days, projectPath, cdHealth);
+        break;
+      }
+
+      case '/api/carbon/sessions': {
+        const csHealth = await checkContextHealth(projectPath, cachedSessions);
+        data = calculateCarbonSessions(cachedSessions, days, projectPath, csHealth);
+        break;
+      }
+
+      case '/api/carbon/files': {
+        const cfHealth = await checkContextHealth(projectPath, cachedSessions);
+        data = calculateCarbonFiles(cachedSessions, days, projectPath, cfHealth);
         break;
       }
 
