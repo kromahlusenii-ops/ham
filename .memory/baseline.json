@@ -1,0 +1,8 @@
+{
+  "captured_at": "2026-02-26",
+  "existing_claude_md": {
+    "found": false
+  },
+  "estimated_baseline_tokens": 7500,
+  "notes": "No existing memory system. Using estimated baseline for agent re-orientation costs."
+}
