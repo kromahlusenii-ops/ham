@@ -1,6 +1,7 @@
 
 
-# 🟢 HAM — Hierarchical Agent Memory
+
+# HAM — Hierarchical Agent Memory
 <p align="center">
   <img src="ham.png" alt="HAM" width="400">
 </p>
