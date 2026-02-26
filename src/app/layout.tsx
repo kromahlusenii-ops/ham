@@ -14,6 +14,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://hamprotocol.com"),
   title: "HAM — Hierarchical Agent Memory",
   description:
     "Scoped memory files that cut context bloat by 50%. Fewer tokens, lower cost, smaller carbon footprint.",
@@ -29,6 +30,9 @@ export const metadata: Metadata = {
     description:
       "Scoped memory files that cut context bloat by 50%.",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
   },
 };
 
