@@ -192,12 +192,6 @@ The launcher auto-installs dependencies and builds the frontend on first run. De
 
 ---
 
-## Contributing
-
-PRs welcome. If you're hitting context bloat with your AI agent, you already understand the problem. Help us solve it.
-
----
-
 ## License
 
 MIT
