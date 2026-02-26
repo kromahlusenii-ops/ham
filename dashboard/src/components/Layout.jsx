@@ -4,6 +4,7 @@ const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'directories', label: 'Directories' },
   { key: 'sessions', label: 'Sessions' },
+  { key: 'insights', label: 'Insights' },
 ];
 
 const TIME_OPTIONS = [7, 14, 30];

@@ -3,6 +3,7 @@ import Layout from './components/Layout.jsx';
 import Overview from './components/Overview.jsx';
 import Directories from './components/Directories.jsx';
 import Sessions from './components/Sessions.jsx';
+import Insights from './components/Insights.jsx';
 import Summary from './components/Summary.jsx';
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
   const [sessions, setSessions] = useState([]);
   const [health, setHealth] = useState([]);
   const [insights, setInsights] = useState(null);
+  const [structuredInsights, setStructuredInsights] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,14 +27,16 @@ export default function App() {
       fetch(`/api/sessions?days=${days}&limit=100`).then(r => r.json()),
       fetch('/api/health').then(r => r.json()),
       fetch(`/api/insights?days=${days}`).then(r => r.json()),
+      fetch(`/api/insights/structured?days=${days}`).then(r => r.json()),
     ])
-      .then(([s, d, dir, sess, h, ins]) => {
+      .then(([s, d, dir, sess, h, ins, sIns]) => {
         setStats(s);
         setDaily(d);
         setDirectories(dir);
         setSessions(sess);
         setHealth(h);
         setInsights(ins);
+        setStructuredInsights(sIns);
       })
       .catch(err => console.error('Failed to fetch data:', err))
       .finally(() => setLoading(false));
@@ -54,6 +58,9 @@ export default function App() {
       )}
       {tab === 'sessions' && (
         <Sessions sessions={sessions} />
+      )}
+      {tab === 'insights' && (
+        <Insights insights={structuredInsights} />
       )}
     </>
   );

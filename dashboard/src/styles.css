@@ -698,6 +698,103 @@ tr:hover td {
   font-family: var(--mono);
 }
 
+/* Insight cards */
+.insights-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.insights-count {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.insights-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.insight-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+}
+
+.insight-badge.actionable { color: var(--red); background: rgba(204, 68, 68, 0.08); }
+.insight-badge.positive { color: var(--green); background: rgba(68, 170, 153, 0.08); }
+.insight-badge.observation { color: var(--text-muted); }
+
+.insight-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  padding: 18px 22px;
+  margin-bottom: 12px;
+  border-left: 3px solid var(--border);
+}
+
+.insight-card.severity-high { border-left-color: var(--red); }
+.insight-card.severity-medium { border-left-color: var(--amber); }
+.insight-card.severity-low { border-left-color: var(--border); }
+.insight-card.type-positive { border-left-color: var(--green); }
+
+.insight-severity {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+}
+
+.insight-severity.high { background: rgba(204, 68, 68, 0.1); color: var(--red); }
+.insight-severity.medium { background: rgba(204, 153, 0, 0.1); color: var(--amber); }
+.insight-severity.positive { background: rgba(68, 170, 153, 0.1); color: var(--green); }
+
+.insight-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.insight-detail {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.insight-action {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.insight-action::before {
+  content: '\2192 ';
+}
+
+.insight-category {
+  display: inline-block;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .metrics-grid {
