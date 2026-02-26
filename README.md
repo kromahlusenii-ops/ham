@@ -1,6 +1,6 @@
 # 🟢 HAM — Hierarchical Agent Memory
 
-**Stop burning tokens. Start scoping context.**
+**Fewer tokens. Greener AI.**
 
 HAM is a memory system for AI coding agents that reduces token consumption by up to 50%. Instead of loading your entire project context on every request, HAM scopes memory to the directory you're actually working in.
 
