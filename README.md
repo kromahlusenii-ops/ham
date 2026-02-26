@@ -74,56 +74,29 @@ HAM makes your AI usage greener by eliminating the tokens that never needed to e
 
 ---
 
+## Installation
+
+```bash
+git clone https://github.com/kromahlusenii-ops/ham.git ~/.claude/skills/ham
+```
+
 ## Quick Start
 
-### 1. Add a root CLAUDE.md
+Open Claude Code in your project directory and say:
 
-Keep it under 250 tokens. Only global conventions belong here.
-
-```markdown
-# Project Memory Protocol
-
-## Stack
-Next.js 14 (App Router), Supabase, Tailwind, TypeScript
-
-## Rules
-- Read THIS file first, then the CLAUDE.md in your target directory
-- Check .memory/decisions.md for architecture tasks
-- Never read more than 3 memory files per task
-- Write to session-log.md before closing any task
+```
+go ham
 ```
 
-### 2. Add directory-level CLAUDE.md files
+That's it. HAM auto-detects your stack, scans your project structure, and generates scoped `CLAUDE.md` files across your codebase. No manual setup required.
 
-Each file contains only what's needed to work in that directory. 20-50 lines max.
+After setup, say `HAM savings` to see your token and cost reduction.
 
-```markdown
-# src/api — Agent Context
+### Updating
 
-## Auth Pattern
-All endpoints use Supabase RLS. No manual auth checks in route handlers.
-
-## Response Format
-Always return { data, error } shape. Never throw from API routes.
-
-## Rate Limiting
-Applied at middleware level. Do not add per-route rate limits.
+```bash
+cd ~/.claude/skills/ham && git pull
 ```
-
-### 3. Add .memory files
-
-```markdown
-# decisions.md
-
-## Auth Strategy — 2026-02-18
-**Context:** Needed auth that works with both SSR and client components.
-**Decision:** Supabase Auth with RLS policies. No custom JWT.
-**Rejected:** NextAuth (extra dependency), custom JWT (maintenance burden).
-```
-
-### 4. Let the agent maintain itself
-
-HAM is self-reinforcing. The root CLAUDE.md instructs the agent to read before coding and write before closing. Context stays fresh without manual maintenance.
 
 ---
 
@@ -135,24 +108,7 @@ HAM follows three principles:
 
 **Read small, read relevant.** The agent loads root context + the target directory's context. Two to three small files instead of the entire project.
 
-**Self-maintaining memory.** Session logs and decision files update as the agent works. Stale context is the enemy — HAM keeps it fresh by design.
-
----
-
-## Installation
-
-```bash
-# Clone into your Claude skills directory
-git clone https://github.com/kromahlusenii-ops/ham.git ~/.claude/skills/ham
-```
-
-### Updating
-
-```bash
-cd ~/.claude/skills/ham && git pull
-```
-
-The dashboard auto-detects when source files are newer than the last build and rebuilds on next launch — no manual `npm run build` needed. If an update is available when you launch the dashboard, you'll see a notice in the terminal.
+**Self-maintaining memory.** Decision files and pattern logs update as the agent works. The root CLAUDE.md instructs the agent to read before coding and write before closing — context stays fresh without manual maintenance.
 
 ## Commands
 
