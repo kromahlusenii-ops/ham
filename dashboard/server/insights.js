@@ -92,6 +92,158 @@ export function generateInsights(stats, health, daily, days) {
   };
 }
 
+/**
+ * Generate machine-readable structured insights for CLI/API consumption.
+ * Returns JSON with categorized, severity-rated insight items.
+ */
+export function generateStructuredInsights(stats, health, daily, days) {
+  const items = [];
+
+  // HAM adoption
+  if (stats.totalSessions > 0) {
+    if (stats.hamOnCount === 0) {
+      items.push({
+        category: 'ham_adoption',
+        severity: 'high',
+        type: 'action',
+        title: 'No sessions using HAM',
+        detail: `0 of ${stats.totalSessions} sessions have HAM enabled.`,
+        action: 'Run "go ham" to set up scoped context files.',
+        data: { hamOnCount: 0, totalSessions: stats.totalSessions, coveragePercent: 0 },
+      });
+    } else if (stats.coveragePercent < 50) {
+      items.push({
+        category: 'ham_adoption',
+        severity: 'medium',
+        type: 'action',
+        title: 'Low HAM adoption',
+        detail: `HAM is active in ${stats.coveragePercent}% of sessions (${stats.hamOnCount} of ${stats.totalSessions}).`,
+        action: 'Add CLAUDE.md files to active directories to increase coverage.',
+        data: { hamOnCount: stats.hamOnCount, totalSessions: stats.totalSessions, coveragePercent: stats.coveragePercent },
+      });
+    } else if (stats.coveragePercent < 80) {
+      items.push({
+        category: 'ham_adoption',
+        severity: 'low',
+        type: 'observation',
+        title: 'Moderate HAM adoption',
+        detail: `HAM is active in ${stats.coveragePercent}% of sessions, saving ~${fmtTokens(stats.totalTokensSaved)} tokens ($${stats.totalCostSaved.toFixed(2)}).`,
+        action: null,
+        data: { hamOnCount: stats.hamOnCount, totalSessions: stats.totalSessions, coveragePercent: stats.coveragePercent, tokensSaved: stats.totalTokensSaved },
+      });
+    } else {
+      items.push({
+        category: 'ham_adoption',
+        severity: 'low',
+        type: 'positive',
+        title: 'Strong HAM adoption',
+        detail: `${stats.coveragePercent}% of sessions are using HAM, saving ~${fmtTokens(stats.totalTokensSaved)} tokens ($${stats.totalCostSaved.toFixed(2)}).`,
+        action: null,
+        data: { hamOnCount: stats.hamOnCount, totalSessions: stats.totalSessions, coveragePercent: stats.coveragePercent, tokensSaved: stats.totalTokensSaved },
+      });
+    }
+  }
+
+  // Context routing
+  if (stats.routedPercent !== undefined && stats.totalSessions > 0) {
+    const routedTotal = (stats.routedCount || 0) + (stats.likelyRoutedCount || 0);
+    if (routedTotal === 0) {
+      items.push({
+        category: 'context_routing',
+        severity: 'high',
+        type: 'action',
+        title: 'No sessions using Context Routing',
+        detail: `0 of ${stats.totalSessions} sessions follow Context Routing.`,
+        action: 'Add a routing section to your root CLAUDE.md (run "ham route").',
+        data: { routedCount: 0, totalSessions: stats.totalSessions, routedPercent: 0 },
+      });
+    } else if (stats.routedPercent < 70) {
+      items.push({
+        category: 'context_routing',
+        severity: 'low',
+        type: 'observation',
+        title: 'Partial Context Routing',
+        detail: `${stats.routedPercent}% of sessions follow Context Routing.`,
+        action: null,
+        data: { routedCount: routedTotal, totalSessions: stats.totalSessions, routedPercent: stats.routedPercent },
+      });
+    } else {
+      items.push({
+        category: 'context_routing',
+        severity: 'low',
+        type: 'positive',
+        title: 'Strong Context Routing',
+        detail: `${stats.routedPercent}% of sessions follow Context Routing.`,
+        action: null,
+        data: { routedCount: routedTotal, totalSessions: stats.totalSessions, routedPercent: stats.routedPercent },
+      });
+    }
+  }
+
+  // Coverage gaps (red directories)
+  const redDirs = health.filter(h => h.status === 'red');
+  if (redDirs.length > 0) {
+    const names = redDirs.slice(0, 5).map(h => h.path);
+    items.push({
+      category: 'coverage_gap',
+      severity: redDirs.length > 5 ? 'high' : redDirs.length > 2 ? 'medium' : 'low',
+      type: 'action',
+      title: `${redDirs.length} directories missing CLAUDE.md`,
+      detail: `Directories without context files: ${names.join(', ')}${redDirs.length > 5 ? ` and ${redDirs.length - 5} more` : ''}.`,
+      action: 'Run "go ham" to generate context files, or create them manually.',
+      data: { count: redDirs.length, directories: redDirs.map(h => h.path) },
+    });
+  }
+
+  // Stale context (amber directories)
+  const amberDirs = health.filter(h => h.status === 'amber');
+  if (amberDirs.length > 0) {
+    items.push({
+      category: 'stale_context',
+      severity: 'medium',
+      type: 'action',
+      title: `${amberDirs.length} context file${amberDirs.length > 1 ? 's' : ''} may be stale`,
+      detail: `Potentially outdated CLAUDE.md files: ${amberDirs.map(h => h.path).join(', ')}.`,
+      action: 'Review these files to ensure they reflect current code.',
+      data: { count: amberDirs.length, directories: amberDirs.map(h => h.path) },
+    });
+  }
+
+  // Activity trend
+  if (days >= 7) {
+    const recentDays = daily.slice(-7);
+    const activeDays = recentDays.filter(d => d.sessions > 0).length;
+    if (activeDays === 0) {
+      items.push({
+        category: 'activity',
+        severity: 'low',
+        type: 'observation',
+        title: 'No activity in the last 7 days',
+        detail: 'No Claude Code sessions recorded in the past week.',
+        action: null,
+        data: { activeDays: 0, windowDays: 7 },
+      });
+    } else if (activeDays >= 5) {
+      items.push({
+        category: 'activity',
+        severity: 'low',
+        type: 'positive',
+        title: 'Consistent daily usage',
+        detail: `Active ${activeDays} of the last 7 days — consistent use keeps cached context warm.`,
+        action: null,
+        data: { activeDays, windowDays: 7 },
+      });
+    }
+  }
+
+  return {
+    generatedAt: new Date().toISOString(),
+    days,
+    totalSessions: stats.totalSessions,
+    items,
+  };
+}
+
 function fmtTokens(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
   if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';

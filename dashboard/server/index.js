@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { parseSessions } from './parse-sessions.js';
 import { calculateStats, calculateDaily, calculateDirectories } from './calculate-stats.js';
 import { checkContextHealth } from './context-health.js';
-import { generateInsights } from './insights.js';
+import { generateInsights, generateStructuredInsights } from './insights.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const DIST_DIR = join(__dirname, '..', 'dist');
@@ -116,6 +116,14 @@ async function handleApi(pathname, params, res) {
         const health = await checkContextHealth(projectPath, cachedSessions);
         const daily = calculateDaily(cachedSessions, days);
         data = generateInsights(stats, health, daily, days);
+        break;
+      }
+
+      case '/api/insights/structured': {
+        const sStats = calculateStats(cachedSessions, days);
+        const sHealth = await checkContextHealth(projectPath, cachedSessions);
+        const sDaily = calculateDaily(cachedSessions, days);
+        data = generateStructuredInsights(sStats, sHealth, sDaily, days);
         break;
       }
 

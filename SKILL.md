@@ -1,6 +1,6 @@
 ---
 name: ham
-description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham route", "HAM savings", "HAM stats", "HAM dashboard", or "HAM sandwich".
+description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham route", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", or "HAM insights".
 ---
 
 # HAM (Hierarchical Agent Memory)
@@ -360,6 +360,59 @@ Press Ctrl+C to stop the server.
 - Data is parsed into memory at startup — no database needed
 - Default port is 7777, configurable via `--port`
 - The server must be run from the user's project directory (it uses `process.cwd()` to determine which project's sessions to load)
+
+## HAM Insights Command
+
+**Trigger:** "HAM insights"
+
+When user runs this command, generate structured insights from their dashboard data and write actionable items to `.memory/inbox.md`.
+
+### What to do
+
+1. **Run the CLI** — execute from the user's project directory:
+
+```bash
+node <path-to-ham-repo>/dashboard/insights-cli.js --days 30
+```
+
+This outputs JSON with categorized insight items. No running server needed.
+
+2. **Parse the output** — the JSON contains an `items` array. Each item has:
+   - `category`: `ham_adoption`, `context_routing`, `coverage_gap`, `stale_context`, or `activity`
+   - `severity`: `high`, `medium`, or `low`
+   - `type`: `action` (actionable), `observation` (informational), or `positive` (good news)
+   - `title`, `detail`, `action` (null if not actionable), `data` (raw evidence)
+
+3. **Filter to actionable items** — only items where `type === "action"` get written to inbox.
+
+4. **Deduplicate** — read existing `.memory/inbox.md` first. Skip any insight whose `title` already appears in the file.
+
+5. **Write to inbox** — for each new actionable item, append to `.memory/inbox.md`:
+
+```markdown
+### Insight: [title] ([YYYY-MM-DD])
+**Confidence:** [severity — high/medium/low]
+**Evidence:** Dashboard analysis of [totalSessions] sessions over [days] days
+**Observed:** [detail]
+**Proposed Action:** [action]
+```
+
+6. **Log to audit** — append a row to `.memory/audit-log.md`:
+
+```
+| [YYYY-MM-DD] | [issues found] | HAM insights: [N] actionable, [M] informational |
+```
+
+If the table exceeds 5 entries, remove the oldest row (keeping the header).
+
+7. **Report to user** — summarize what was found:
+   - Count of actionable vs informational vs positive items
+   - List titles of items written to inbox
+   - If no actionable insights, tell the user and skip writing
+
+### If no actionable insights
+
+Tell the user everything looks healthy and no items were written to inbox. Still report any positive or observational insights as a summary.
 
 ## Templates
 
