@@ -186,6 +186,12 @@ export default function Overview({ stats, daily, health, carbon }) {
           sub={`${stats.hamOffCount} without HAM`}
           info={'Each session, Claude reads files to understand your code. Fewer reads per session usually means Claude already has what it needs from your CLAUDE.md files \u2014 like having a good table of contents instead of flipping through every page.'}
         />
+        <MetricCard
+          label="Sessions Routed"
+          value={`${stats.routedPercent}%`}
+          sub={`${stats.routedCount + stats.likelyRoutedCount} of ${stats.totalSessions} sessions`}
+          info={'Shows how often the agent followed your Context Routing map. Routed = root CLAUDE.md was read, then the listed sub-context was loaded immediately. Likely = a listed file was loaded but not right after root. Unrouted = root wasn\'t read or the sub-context wasn\'t in the routing map.'}
+        />
       </div>
 
       <div className="chart-section">

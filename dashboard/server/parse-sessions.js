@@ -1,5 +1,5 @@
 import { readdir, stat } from 'fs/promises';
-import { createReadStream } from 'fs';
+import { createReadStream, readFileSync } from 'fs';
 import { createInterface } from 'readline';
 import { join, basename, dirname, relative } from 'path';
 import { getProjectSessionDir } from './utils.js';
@@ -10,6 +10,7 @@ import { getProjectSessionDir } from './utils.js';
  */
 export async function parseSessions(projectPath) {
   const sessionDir = getProjectSessionDir(projectPath);
+  const routingPaths = extractRoutingPaths(projectPath);
 
   let files;
   try {
@@ -28,7 +29,7 @@ export async function parseSessions(projectPath) {
   for (const file of files) {
     const filePath = join(sessionDir, file);
     try {
-      const session = await parseOneSession(filePath, projectPath);
+      const session = await parseOneSession(filePath, projectPath, routingPaths);
       if (session && session.sessionId) {
         sessions.push(session);
       }
@@ -43,7 +44,7 @@ export async function parseSessions(projectPath) {
 /**
  * Parse a single JSONL file into a session object.
  */
-async function parseOneSession(filePath, projectPath) {
+async function parseOneSession(filePath, projectPath, routingPaths) {
   const session = {
     sessionId: null,
     startTime: null,
@@ -57,6 +58,7 @@ async function parseOneSession(filePath, projectPath) {
     fileReads: [],        // all file paths read
     claudeMdReads: [],    // CLAUDE.md reads specifically
     isHamOn: false,
+    routingStatus: 'unrouted',
     primaryDirectory: null,
     messageCount: 0,
     toolCallCount: 0,
@@ -155,6 +157,9 @@ async function parseOneSession(filePath, projectPath) {
   // Attribute primary directory
   session.primaryDirectory = attributeDirectory(session.fileReads, projectPath);
 
+  // Determine routing status
+  session.routingStatus = determineRoutingStatus(session, projectPath, routingPaths);
+
   return session;
 }
 
@@ -185,4 +190,71 @@ function attributeDirectory(fileReads, projectPath) {
   }
 
   return maxDir;
+}
+
+/**
+ * Extract routing paths from the root CLAUDE.md's "## Context Routing" section.
+ * Returns an array of absolute paths. Cached per parseSessions() invocation.
+ */
+function extractRoutingPaths(projectPath) {
+  const claudeMdPath = join(projectPath, 'CLAUDE.md');
+  let content;
+  try {
+    content = readFileSync(claudeMdPath, 'utf-8');
+  } catch {
+    return [];
+  }
+
+  const lines = content.split('\n');
+  let inSection = false;
+  const paths = [];
+
+  for (const line of lines) {
+    if (line.startsWith('## Context Routing')) {
+      inSection = true;
+      continue;
+    }
+    if (inSection && line.startsWith('## ')) {
+      break; // hit the next section
+    }
+    if (inSection) {
+      // Match lines like: → label: path/to/CLAUDE.md
+      const match = line.match(/^→\s+\w+:\s+(.+)$/);
+      if (match) {
+        paths.push(join(projectPath, match[1].trim()));
+      }
+    }
+  }
+
+  return paths;
+}
+
+/**
+ * Determine whether a session followed the context routing map.
+ * - 'routed': root CLAUDE.md read, then a listed sub-context immediately after
+ * - 'likely': root read, and a listed sub-context appears later (not immediately after)
+ * - 'unrouted': root not read, or no listed sub-context found
+ */
+function determineRoutingStatus(session, projectPath, routingPaths) {
+  if (routingPaths.length === 0) return 'unrouted';
+
+  const reads = session.claudeMdReads;
+  const rootPath = join(projectPath, 'CLAUDE.md');
+  const rootIndex = reads.indexOf(rootPath);
+
+  if (rootIndex === -1) return 'unrouted';
+
+  // Check if the immediate next CLAUDE.md read is a routing target
+  if (rootIndex + 1 < reads.length && routingPaths.includes(reads[rootIndex + 1])) {
+    return 'routed';
+  }
+
+  // Check if any later read is a routing target
+  for (let i = rootIndex + 1; i < reads.length; i++) {
+    if (routingPaths.includes(reads[i])) {
+      return 'likely';
+    }
+  }
+
+  return 'unrouted';
 }

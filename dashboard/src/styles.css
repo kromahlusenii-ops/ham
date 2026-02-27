@@ -234,7 +234,7 @@ body {
 /* Metric cards */
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-card);
@@ -574,6 +574,32 @@ tr:hover td {
   color: var(--text-muted);
 }
 
+/* Routing badge */
+.routing-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.routing-badge.routed {
+  background: rgba(68, 170, 153, 0.12);
+  color: var(--green);
+}
+
+.routing-badge.likely {
+  background: rgba(204, 153, 0, 0.1);
+  color: var(--amber);
+}
+
+.routing-badge.unrouted {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+}
+
 /* Empty state */
 .empty-state {
   text-align: center;
@@ -902,7 +928,7 @@ tr:hover td {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .metric-card:nth-child(2) {
+  .metric-card:nth-child(even) {
     border-right: none;
   }
 

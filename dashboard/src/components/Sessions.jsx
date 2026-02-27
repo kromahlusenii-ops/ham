@@ -58,6 +58,7 @@ export default function Sessions({ sessions }) {
             <th>Duration</th>
             <th>Model</th>
             <th>HAM</th>
+            <th>Routing</th>
             <th>Messages</th>
             <th>Tools</th>
             <th>File Reads</th>
@@ -75,6 +76,13 @@ export default function Sessions({ sessions }) {
               <td>
                 <span className={`ham-badge ${s.isHamOn ? 'on' : 'off'}`}>
                   {s.isHamOn ? 'ON' : 'OFF'}
+                </span>
+              </td>
+              <td>
+                <span className={`routing-badge ${s.routingStatus || 'unrouted'}`}>
+                  {s.routingStatus === 'routed' ? 'Routed'
+                    : s.routingStatus === 'likely' ? 'Likely'
+                    : 'Unrouted'}
                 </span>
               </td>
               <td>{s.messageCount}</td>

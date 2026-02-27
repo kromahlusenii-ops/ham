@@ -1,6 +1,6 @@
 ---
 name: ham
-description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
+description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham route", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
 ---
 
 # HAM (Hierarchical Agent Memory)
@@ -434,6 +434,20 @@ Review periodically. Confirm → move to decisions/patterns. Reject → delete.
 
 ---
 ```
+
+## HAM Route Command
+
+**Trigger:** "ham route"
+
+When user runs this command, add or update the Context Routing section in root CLAUDE.md:
+
+1. **Scan tree** — find all existing CLAUDE.md files (excluding root)
+2. **Build routing entries** — for each: `→ [label]: [relative/path/to/CLAUDE.md]`
+   - Label = directory name (e.g., `src/api/CLAUDE.md` → `api`)
+3. **Update root CLAUDE.md:**
+   - If no `## Context Routing` section → append after last section
+   - If section exists → diff and show additions only
+4. Never remove existing entries. Never modify non-routing content.
 
 ## HAM Carbon Command
 
