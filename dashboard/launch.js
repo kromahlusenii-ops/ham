@@ -51,9 +51,24 @@ try {
   const local = execSync('git rev-parse HEAD', { cwd: repoDir, encoding: 'utf-8' }).trim();
   const remote = execSync('git rev-parse origin/main', { cwd: repoDir, encoding: 'utf-8' }).trim();
   if (local !== remote) {
-    const pkg = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf-8'));
-    console.log(`\n  Update available! You're running ham v${pkg.version}.`);
-    console.log(`  Run: cd ${repoDir} && git pull\n`);
+    // Read local version from SKILL.md
+    const skillPath = join(repoDir, 'SKILL.md');
+    const localSkill = readFileSync(skillPath, 'utf-8');
+    const localMatch = localSkill.match(/^ham_version:\s*"(.+)"/m);
+    const localVersion = localMatch ? localMatch[1] : 'unknown';
+
+    // Read remote version from SKILL.md on origin/main
+    let remoteVersion = 'unknown';
+    try {
+      const remoteSkill = execSync('git show origin/main:SKILL.md', { cwd: repoDir, encoding: 'utf-8' });
+      const remoteMatch = remoteSkill.match(/^ham_version:\s*"(.+)"/m);
+      if (remoteMatch) remoteVersion = remoteMatch[1];
+    } catch {
+      // Couldn't read remote SKILL.md — fall through with 'unknown'
+    }
+
+    console.log(`\n  Update available! You're on v${localVersion}. Latest is v${remoteVersion}.`);
+    console.log(`  Run: ham update\n`);
   }
 } catch {
   // Offline, not a git repo, or no remote — skip silently

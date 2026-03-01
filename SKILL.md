@@ -1,6 +1,7 @@
 ---
 name: ham
-description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham route", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
+ham_version: "2026.02.28"
+description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham route", "ham update", "ham status", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
 ---
 
 # HAM (Hierarchical Agent Memory)
@@ -13,6 +14,7 @@ Scoped memory system that reduces context token spend per request.
 
 When user says "go ham":
 
+0. **Check for updates** — compare local `.ham/version` (if it exists) against the `ham_version` field in this skill's YAML frontmatter. If outdated, print one line: `HAM update available (v2026.02.28). Run "ham update" to get the latest.` Never block the command — continue immediately.
 1. **Auto-detect everything** — scan for platform signals and project maturity silently
 2. **Generate files** — create the memory structure without asking questions
 3. **Confirm setup** — list files created, tell user to run `HAM savings` to see impact
@@ -47,6 +49,8 @@ Create files based on detection:
 ```
 project/
 ├── CLAUDE.md              # Root context (~200 tokens)
+├── .ham/
+│   └── version            # Current HAM version (written from ham_version in SKILL.md)
 ├── .memory/
 │   ├── decisions.md       # Empty, ready for ADRs
 │   ├── patterns.md        # Empty, ready for patterns
@@ -56,7 +60,9 @@ project/
     └── CLAUDE.md          # Per-directory context (brownfield only)
 ```
 
-For greenfield: only create root + .memory/
+Also create `.ham/version` containing the `ham_version` value from this skill's frontmatter (e.g., `2026.02.28`). This file is used for startup update checks.
+
+For greenfield: only create root + .memory/ + .ham/
 For brownfield: also create subdirectory CLAUDE.md files.
 
 ### Step 3: Capture Baseline
@@ -112,7 +118,7 @@ If no existing CLAUDE.md, use estimated baseline:
 After creating files, output:
 
 ```
-HAM setup complete. Created [N] files.
+HAM v2026.02.28 setup complete. Created [N] files.
 Baseline captured in .memory/baseline.json
 
 Run "HAM savings" to see your token and cost savings.
@@ -207,6 +213,51 @@ cost_sonnet = (monthly_tokens_saved / 1_000_000) * 3  # $3/M
 cost_opus = (monthly_tokens_saved / 1_000_000) * 15   # $15/M
 ```
 
+## HAM Update Command
+
+**Trigger:** "ham update"
+
+When user runs this command:
+
+1. **Run the update script** — execute:
+
+```bash
+bash <path-to-ham-repo>/scripts/update.sh
+```
+
+Where `<path-to-ham-repo>` is this skill's installation directory (e.g., `~/.claude/skills/ham`).
+
+2. **Show result** — the script reports whether HAM was already up to date or shows the before/after commit hashes.
+
+3. **Update local version** — after a successful update, read the new `ham_version` from this skill's YAML frontmatter and write it to the project's `.ham/version` file.
+
+4. **Reassure the user** — confirm that user data (`.memory/`, CLAUDE.md files, `.ham/`) is untouched by the update. Only HAM skill files are updated.
+
+## HAM Status Command
+
+**Trigger:** "ham status"
+
+When user runs this command, show a quick status overview:
+
+```
+┌─────────────────────────────────────────────┐
+│  HAM Status                                  │
+├─────────────────────────────────────────────┤
+│  Version:      v[ham_version from SKILL.md] │
+│  Update:       [up to date | available]     │
+│  Memory files: [N] files in .memory/        │
+│  Last setup:   [date from baseline.json]    │
+│  Model:        [detected model or unknown]  │
+└─────────────────────────────────────────────┘
+```
+
+How to gather each field:
+- **Version**: read `ham_version` from this skill's YAML frontmatter
+- **Update**: compare local `.ham/version` against `ham_version`. If they match, "up to date". If different or `.ham/version` missing, "available — run `ham update`"
+- **Memory files**: count files in `.memory/` directory
+- **Last setup**: read `captured_at` from `.memory/baseline.json` (show "not set up" if missing)
+- **Model**: detect from recent session data or environment (show "unknown" if unavailable)
+
 ## System Architecture
 
 Three layers:
@@ -294,6 +345,7 @@ When user runs this command, launch the interactive web dashboard that visualize
 
 ### What to do
 
+0. **Check for updates** — compare local `.ham/version` (if it exists) against the `ham_version` field in this skill's YAML frontmatter. If outdated, print one line: `HAM update available (v2026.02.28). Run "ham update" to get the latest.` Never block the command — continue immediately.
 1. **Locate the dashboard** — the dashboard lives at `dashboard/` relative to the HAM skill installation directory (this repo).
 2. **Launch it** — run the following command from the **project root** (the user's current working directory):
 

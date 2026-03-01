@@ -1,5 +1,5 @@
 import { createServer } from 'http';
-import { readFile } from 'fs/promises';
+import { readFile, readFile as readFileAsync } from 'fs/promises';
 import { join, extname } from 'path';
 import { fileURLToPath } from 'url';
 import { parseSessions } from './parse-sessions.js';
@@ -10,6 +10,17 @@ import { calculateCarbon, calculateCarbonDaily, calculateCarbonSessions, calcula
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const DIST_DIR = join(__dirname, '..', 'dist');
+const SKILL_MD_PATH = join(__dirname, '..', '..', 'SKILL.md');
+
+// Read ham_version from SKILL.md frontmatter
+let hamVersion = '0.0.0';
+try {
+  const skillContent = await readFileAsync(SKILL_MD_PATH, 'utf-8');
+  const match = skillContent.match(/^ham_version:\s*"(.+)"/m);
+  if (match) hamVersion = match[1];
+} catch {
+  // SKILL.md not found — use fallback
+}
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -73,6 +84,7 @@ async function handleApi(pathname, params, res) {
       case '/api/stats':
         data = calculateStats(cachedSessions, days);
         data.projectName = projectPath.split('/').pop();
+        data.hamVersion = hamVersion;
         break;
 
       case '/api/daily':
