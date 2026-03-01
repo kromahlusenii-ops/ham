@@ -112,14 +112,35 @@ HAM follows three principles:
 
 ## Commands
 
+### Setup
 | Command | What it does |
 |---|---|
 | **`go ham`** | Set up HAM in your project (auto-detects everything) |
-| **`HAM savings`** | Show token/cost savings report with transparent calculations |
-| **`HAM audit`** | Check health of your memory system |
-| **`HAM dashboard`** | Launch the web dashboard to visualize token usage and savings |
-| **`HAM sandwich`** | Same as above, but more fun to say |
-| **`HAM carbon`** | Show energy and carbon efficiency stats |
+| **`ham update`** | Update HAM to the latest version |
+| **`ham status`** | Show HAM version and setup status |
+| **`ham route`** | Add/update Context Routing in root CLAUDE.md |
+
+### Analytics
+| Command | What it does |
+|---|---|
+| **`ham dashboard`** | Launch the web dashboard at localhost:7777 |
+| **`ham savings`** | Show token and cost savings report |
+| **`ham carbon`** | Show energy and CO2e efficiency stats |
+| **`ham insights`** | Generate insights and write actionable items to inbox |
+
+### Benchmarking
+| Command | What it does |
+|---|---|
+| **`ham benchmark`** | Compare baseline vs HAM task performance |
+| **`ham baseline start`** | Begin 10-task baseline capture (no HAM memory loading) |
+| **`ham baseline stop`** | End baseline early, keep partial data |
+| **`ham metrics clear`** | Delete all benchmark data |
+
+### Maintenance
+| Command | What it does |
+|---|---|
+| **`ham audit`** | Check memory system health |
+| **`ham commands`** | Show all available commands |
 
 ## Dashboard
 
@@ -128,7 +149,7 @@ Say `HAM dashboard` (or `HAM sandwich`) to launch an interactive web dashboard a
 The dashboard shows:
 
 - **Token savings** — estimated tokens and cost saved by HAM, comparing HAM-on vs HAM-off sessions
-- **Personalized insights** — AI-generated analysis of your usage patterns, cache efficiency, and coverage gaps
+- **Task benchmarking** — baseline vs HAM performance comparison on the Overview tab
 - **Daily trends** — charts of input tokens, cache reads, and cost over time
 - **Directory breakdown** — which directories you work in most and their HAM adoption
 - **Session history** — every session with model, duration, token counts, and HAM status
