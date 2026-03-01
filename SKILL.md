@@ -1,7 +1,7 @@
 ---
 name: ham
 ham_version: "2026.02.28"
-description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham route", "ham update", "ham status", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
+description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham route", "ham update", "ham status", "ham benchmark", "ham baseline start", "ham baseline stop", "ham metrics clear", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
 ---
 
 # HAM (Hierarchical Agent Memory)
@@ -50,7 +50,9 @@ Create files based on detection:
 project/
 ├── CLAUDE.md              # Root context (~200 tokens)
 ├── .ham/
-│   └── version            # Current HAM version (written from ham_version in SKILL.md)
+│   ├── version            # Current HAM version (written from ham_version in SKILL.md)
+│   └── metrics/
+│       └── state.json     # Benchmark state (baseline/active mode)
 ├── .memory/
 │   ├── decisions.md       # Empty, ready for ADRs
 │   ├── patterns.md        # Empty, ready for patterns
@@ -113,6 +115,21 @@ If no existing CLAUDE.md, use estimated baseline:
 }
 ```
 
+### Step 3b: Initialize Benchmarking
+
+Create `.ham/metrics/state.json` with baseline mode:
+
+```json
+{
+  "mode": "baseline",
+  "tasks_completed": 0,
+  "tasks_target": 10,
+  "started_at": "YYYY-MM-DDTHH:mm:ssZ"
+}
+```
+
+This puts the agent in baseline mode: the next 10 tasks will be logged to `.ham/metrics/baseline.jsonl` and the agent will skip subdirectory CLAUDE.md and `.memory/` files during baseline (still reads root CLAUDE.md). After 10 tasks, auto-transitions to active mode.
+
 ### Step 4: Confirm Setup
 
 After creating files, output:
@@ -120,8 +137,10 @@ After creating files, output:
 ```
 HAM v2026.02.28 setup complete. Created [N] files.
 Baseline captured in .memory/baseline.json
+Benchmarking initialized — next 10 tasks capture baseline.
 
 Run "HAM savings" to see your token and cost savings.
+Run "ham benchmark" after the baseline to see performance comparison.
 ```
 
 ## HAM Savings Command
@@ -301,6 +320,125 @@ Embed in every root CLAUDE.md:
 - Never overwrite decisions — mark as [superseded]
 - Never promote from inbox without user confirmation
 ```
+
+## Task Metrics Logging
+
+The agent logs per-task metrics to enable benchmarking HAM's impact. Each user message that causes the agent to read/write project files counts as 1 task. Trivial queries (HAM help, yes/no answers, clarifying questions) are skipped.
+
+### Entry Format
+
+Write JSONL entries to `.ham/metrics/tasks.jsonl` (or `baseline.jsonl` if in baseline mode). Each task produces two entries:
+
+**task_start:**
+```json
+{"id":"task-<uuid>","type":"task_start","timestamp":"ISO-8601","description":"Brief task description","ham_active":true,"model":"claude-opus-4-6","files_read":0,"memory_files_loaded":0,"estimated_tokens":0}
+```
+
+**task_end:**
+```json
+{"id":"task-<uuid>","type":"task_end","timestamp":"ISO-8601","status":"completed"}
+```
+
+### Rules
+
+- Use the same `id` for both `task_start` and `task_end` entries
+- Generate a unique ID per task (e.g., `task-` + 8 random hex chars)
+- Set `ham_active` to `true` in active mode, `false` in baseline mode
+- Set `model` to the current model name (e.g., `claude-opus-4-6`)
+- Set `files_read` to the count of project files read during the task
+- Set `memory_files_loaded` to the count of `.memory/` and CLAUDE.md files loaded
+- Set `estimated_tokens` to an estimate of total characters processed divided by 4
+- Set `status` to `completed` or `error` in the `task_end` entry
+- Create `.ham/metrics/` directory if it doesn't exist
+- Skip logging for trivial queries (HAM commands, yes/no, clarifications)
+
+### Baseline Mode
+
+Before writing task entries, check `.ham/metrics/state.json`:
+
+1. If `mode` is `"baseline"`:
+   - Write entries to `baseline.jsonl` (not `tasks.jsonl`)
+   - Set `ham_active` to `false`
+   - **Skip** subdirectory CLAUDE.md files and `.memory/` files (still read root CLAUDE.md)
+   - After writing `task_end`, increment `tasks_completed` in `state.json`
+   - If `tasks_completed >= tasks_target`, update `state.json` to `{"mode":"active","transitioned_at":"ISO-8601"}`
+
+2. If `mode` is `"active"` or `state.json` doesn't exist:
+   - Write entries to `tasks.jsonl`
+   - Set `ham_active` to `true`
+   - Load all CLAUDE.md and `.memory/` files as normal
+
+## HAM Benchmark Command
+
+**Trigger:** "ham benchmark"
+
+When user runs this command, show task-level performance comparison between baseline and HAM-active modes.
+
+### What to do
+
+1. **Run the CLI** — execute from the user's project directory:
+
+```bash
+node <path-to-ham-repo>/dashboard/benchmark-cli.js [--days 30] [--model sonnet] [--json]
+```
+
+2. **Display results** — the CLI handles three states:
+   - **No data**: instructions to run `go ham` or `ham baseline start`
+   - **Baseline in progress**: progress bar showing N/10 tasks completed
+   - **Comparison available**: table comparing baseline vs HAM-active metrics (avg time, avg tokens, cache rate, per-model breakdown)
+
+### Flags
+
+- `--days N`: time window (default 30)
+- `--model <name>`: filter to tasks using a specific model (e.g., `--model sonnet` for apples-to-apples)
+- `--json`: raw JSON output
+
+## HAM Baseline Commands
+
+**Trigger:** "ham baseline start" or "ham baseline stop"
+
+### ham baseline start
+
+Creates `.ham/metrics/state.json`:
+
+```json
+{
+  "mode": "baseline",
+  "tasks_completed": 0,
+  "tasks_target": 10,
+  "started_at": "ISO-8601"
+}
+```
+
+Create `.ham/metrics/` directory if it doesn't exist.
+
+Tell the user: "Baseline mode started. The next 10 tasks will be logged without HAM memory loading for a clean performance comparison. Keep working normally."
+
+### ham baseline stop
+
+Updates `.ham/metrics/state.json` to transition to active mode:
+
+```json
+{
+  "mode": "active",
+  "transitioned_at": "ISO-8601"
+}
+```
+
+Preserves any partial baseline data already in `baseline.jsonl`. Tell the user how many baseline tasks were captured and that active benchmarking is now running.
+
+## HAM Metrics Clear Command
+
+**Trigger:** "ham metrics clear"
+
+When user runs this command:
+
+1. **Confirm** — ask "This will delete all benchmark data (tasks.jsonl, baseline.jsonl, state.json). Continue?"
+2. **If confirmed** — delete:
+   - `.ham/metrics/tasks.jsonl`
+   - `.ham/metrics/baseline.jsonl`
+   - `.ham/metrics/state.json`
+3. **Report** — "Benchmark data cleared. Run `ham baseline start` or `go ham` to start fresh."
 
 ## HAM Audit Command
 

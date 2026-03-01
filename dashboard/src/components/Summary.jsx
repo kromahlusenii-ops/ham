@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 export default function Summary({ insights }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   if (!insights) return null;
 

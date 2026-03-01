@@ -7,6 +7,7 @@ import { calculateStats, calculateDaily, calculateDirectories } from './calculat
 import { checkContextHealth } from './context-health.js';
 import { generateInsights, generateStructuredInsights } from './insights.js';
 import { calculateCarbon, calculateCarbonDaily, calculateCarbonSessions, calculateCarbonFiles } from './carbon.js';
+import { getBenchmarkState, calculateBenchmarkSummary, calculateBenchmarkComparison, getRecentTasks } from './benchmark.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const DIST_DIR = join(__dirname, '..', 'dist');
@@ -163,6 +164,21 @@ async function handleApi(pathname, params, res) {
         data = calculateCarbonFiles(cachedSessions, days, projectPath, cfHealth);
         break;
       }
+
+      case '/api/benchmark':
+        data = {
+          ...calculateBenchmarkSummary(projectPath, cachedSessions, days),
+          state: getBenchmarkState(projectPath),
+        };
+        break;
+
+      case '/api/benchmark/tasks':
+        data = getRecentTasks(projectPath, cachedSessions, limit, days);
+        break;
+
+      case '/api/benchmark/comparison':
+        data = calculateBenchmarkComparison(projectPath, cachedSessions, days);
+        break;
 
       case '/api/refresh':
         console.log('  Refreshing session data...');
