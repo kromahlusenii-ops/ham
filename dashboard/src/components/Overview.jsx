@@ -105,7 +105,10 @@ export default function Overview({ stats, daily, carbon, benchmark, benchmarkCom
       {/* Benchmark section */}
       {(!benchmark || (benchmark.totalTasks === 0 && (!benchmark.state || benchmark.state.mode === 'none'))) && (
         <div className="table-card" style={{ textAlign: 'center', padding: '32px 24px' }}>
-          <h3 style={{ marginBottom: 8 }}>Task Performance</h3>
+          <h3 style={{ marginBottom: 8 }}>
+            Task Performance
+            <InfoTip text={'Benchmarking measures HAM\u2019s impact on your actual workflow by comparing two phases:\n\n1. Baseline (10 tasks): The agent works normally but skips subdirectory CLAUDE.md and .memory/ files. Each task logs wall-clock time, model used, and estimated tokens (chars \u00f7 4).\n\n2. Active (HAM enabled): The agent loads scoped memory as normal. Same metrics are logged.\n\nToken counts are correlated with Claude Code session JSONL data using proportional allocation: task_tokens = session_tokens \u00d7 (task_duration \u00f7 session_duration). This gives accurate per-task token usage even though Claude Code only reports session-level totals.\n\nThe comparison shows the difference in avg time, avg tokens, and cache hit rate between the two phases. Negative token/time changes = HAM is faster/cheaper.'} />
+          </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 12 }}>
             No benchmark data yet. Run <strong style={{ color: 'var(--text)' }}>"ham baseline start"</strong> to begin capturing per-task metrics, or <strong style={{ color: 'var(--text)' }}>"go ham"</strong> to set up HAM with automatic baseline.
           </p>
@@ -137,7 +140,7 @@ export default function Overview({ stats, daily, carbon, benchmark, benchmarkCom
         <div className="table-card">
           <h3>
             Task Performance
-            <InfoTip text={'Per-task metrics comparing baseline (no HAM memory) vs active (HAM enabled). Avg Time = wall clock per task. Avg Tokens = session tokens allocated proportionally by task duration. Run "ham benchmark" in CLI for detailed breakdown.'} />
+            <InfoTip text={'Benchmarking measures HAM\u2019s impact on your actual workflow by comparing two phases:\n\n1. Baseline (10 tasks): The agent works normally but skips subdirectory CLAUDE.md and .memory/ files. Each task logs wall-clock time, model used, and estimated tokens (chars \u00f7 4).\n\n2. Active (HAM enabled): The agent loads scoped memory as normal. Same metrics are logged.\n\nToken counts are correlated with Claude Code session JSONL data using proportional allocation: task_tokens = session_tokens \u00d7 (task_duration \u00f7 session_duration). This gives accurate per-task token usage even though Claude Code only reports session-level totals.\n\nThe comparison shows the difference in avg time, avg tokens, and cache hit rate between the two phases. Negative token/time changes = HAM is faster/cheaper. Run "ham benchmark" in CLI for raw data.'} />
           </h3>
           <div className="metrics-grid" style={{ marginBottom: 16 }}>
             <MetricCard

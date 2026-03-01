@@ -1,12 +1,47 @@
 ---
 name: ham
 ham_version: "2026.02.28"
-description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham route", "ham update", "ham status", "ham benchmark", "ham baseline start", "ham baseline stop", "ham metrics clear", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
+description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham commands", "ham help", "ham route", "ham update", "ham status", "ham benchmark", "ham baseline start", "ham baseline stop", "ham metrics clear", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
 ---
 
 # HAM (Hierarchical Agent Memory)
 
 Scoped memory system that reduces context token spend per request.
+
+## HAM Commands
+
+**Trigger:** "ham commands" or "ham help"
+
+When user runs this command, display all available HAM commands:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  HAM Commands                                                │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  SETUP                                                       │
+│  go ham              Set up HAM in your project              │
+│  ham update          Update HAM to the latest version        │
+│  ham status          Show HAM version and setup status       │
+│  ham route           Add/update Context Routing in CLAUDE.md │
+│                                                              │
+│  ANALYTICS                                                   │
+│  ham dashboard       Launch the web dashboard (:7777)        │
+│  ham savings         Show token and cost savings report      │
+│  ham carbon          Show energy and CO2e efficiency         │
+│  ham insights        Generate insights → write to inbox      │
+│                                                              │
+│  BENCHMARKING                                                │
+│  ham benchmark       Compare baseline vs HAM performance     │
+│  ham baseline start  Begin 10-task baseline capture          │
+│  ham baseline stop   End baseline early, keep partial data   │
+│  ham metrics clear   Delete all benchmark data               │
+│                                                              │
+│  MAINTENANCE                                                 │
+│  ham audit           Check memory system health              │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Quick Start
 
