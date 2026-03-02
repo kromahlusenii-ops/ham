@@ -45,7 +45,7 @@ const PLANNED_METRICS = [
   },
 ];
 
-export default function RepoAnalytics({ repoId }: { repoId: string }) {
+export default function RepoAnalytics({ repoId, hamInitialized }: { repoId: string; hamInitialized?: boolean }) {
   const [days, setDays] = useState<TimeRange>(30);
   const { data, isLoading, error } = useRepoAnalytics(repoId, days);
 
@@ -112,16 +112,19 @@ export default function RepoAnalytics({ repoId }: { repoId: string }) {
                   2
                 </span>
                 <span className="text-xs font-semibold text-ink">Initialize</span>
+                {hamInitialized && <Check className="h-3.5 w-3.5 text-accent ml-auto" />}
               </div>
               <p className="text-[11px] text-gray leading-relaxed">
-                Initialize HAM from the <span className="font-medium text-ink">Files</span> tab
-                to add memory files and a config. This is what the compiler reads.
+                {hamInitialized
+                  ? "HAM is initialized. Memory files and config are in place."
+                  : <>Initialize HAM from the <span className="font-medium text-ink">Files</span> tab to add memory files and a config. This is what the compiler reads.</>
+                }
               </p>
             </div>
 
             <div className="rounded-lg border border-stone p-4">
               <div className="flex items-center gap-2 mb-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-stone text-[10px] font-bold text-gray">
+                <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${hamInitialized ? "bg-accent text-white" : "bg-stone text-gray"}`}>
                   3
                 </span>
                 <span className="text-xs font-semibold text-ink">Use your agent</span>

@@ -66,7 +66,7 @@ export default function RepoDetail({
         ))}
       </div>
 
-      {activeTab === "analytics" && <RepoAnalytics repoId={repoId} />}
+      {activeTab === "analytics" && <RepoAnalytics repoId={repoId} hamInitialized={initialized} />}
 
       {activeTab === "scope" && <ScopeView files={files} />}
 
