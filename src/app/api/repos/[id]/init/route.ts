@@ -13,6 +13,7 @@ import type { ConnectedRepo, InitMode, InitResult } from "@/lib/types";
 
 const INIT_PATHS = [
   "CLAUDE.md",
+  ".ham/config.json",
   ".memory/decisions.md",
   ".memory/patterns.md",
   ".memory/inbox.md",
@@ -37,6 +38,7 @@ export async function POST(
       mode,
       filesCreated: [
         "CLAUDE.md",
+        ".ham/config.json",
         ".memory/decisions.md",
         ".memory/patterns.md",
         ".memory/inbox.md",

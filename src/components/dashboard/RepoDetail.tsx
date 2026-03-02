@@ -9,9 +9,8 @@ import InitCTA from "./InitCTA";
 import InitModal from "./InitModal";
 import RepoAnalytics from "./RepoAnalytics";
 import ScopeView from "./ScopeView";
-import CompileView from "./CompileView";
 
-type Tab = "analytics" | "files" | "scope" | "compile";
+type Tab = "analytics" | "files" | "scope";
 
 export default function RepoDetail({
   repoId,
@@ -46,7 +45,6 @@ export default function RepoDetail({
     { key: "analytics", label: "Analytics" },
     { key: "files", label: "Files" },
     { key: "scope", label: "Scope" },
-    { key: "compile", label: "Compile" },
   ];
 
   return (
@@ -71,8 +69,6 @@ export default function RepoDetail({
       {activeTab === "analytics" && <RepoAnalytics repoId={repoId} />}
 
       {activeTab === "scope" && <ScopeView files={files} />}
-
-      {activeTab === "compile" && <CompileView repoId={repoId} files={files} />}
 
       {activeTab === "files" && (
         <>

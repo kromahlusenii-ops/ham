@@ -85,8 +85,24 @@ export function generateInboxMd(): string {
 `;
 }
 
+export function generateHamConfig(): string {
+  return JSON.stringify(
+    {
+      hamVersion: "1.0.0",
+      enabledImporters: ["ham", "claude", "cursor", "gemini", "aider", "copilot", "llama", "manus"],
+      precedencePreset: "target-first",
+      defaultBudget: 2000,
+      ignoredPaths: ["node_modules", ".git", "dist", "build", ".next"],
+      taxonomyVersion: "1.0.0",
+    },
+    null,
+    2,
+  );
+}
+
 const INIT_FILES: Record<string, (ctx: RepoContext) => string> = {
   "CLAUDE.md": generateRootClaudeMd,
+  ".ham/config.json": () => generateHamConfig(),
   ".memory/decisions.md": () => generateDecisionsMd(),
   ".memory/patterns.md": () => generatePatternsMd(),
   ".memory/inbox.md": () => generateInboxMd(),

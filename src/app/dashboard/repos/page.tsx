@@ -3,6 +3,7 @@ import { MOCK_CONNECTED_REPOS } from "@/lib/seed-data";
 import { fetchUserRepos } from "@/lib/github";
 import type { ConnectedRepo } from "@/lib/types";
 import GithubRepoList from "@/components/dashboard/GithubRepoList";
+import ConnectInfo from "@/components/dashboard/ConnectInfo";
 
 async function getConnectedRepos(userId: string): Promise<ConnectedRepo[]> {
   if (!isSupabaseConfigured()) {
@@ -41,6 +42,8 @@ export default async function ReposPage() {
           Connect GitHub repositories to track agent memory usage.
         </p>
       </div>
+
+      <ConnectInfo />
 
       <GithubRepoList connectedRepos={connectedRepos} initialRepos={githubRepos} />
     </div>

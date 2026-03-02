@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DollarSign, Cpu, MessageSquare, Layers, BarChart3, Leaf, TrendingDown } from "lucide-react";
+import { DollarSign, Cpu, MessageSquare, Layers, BarChart3, Leaf, TrendingDown, Check } from "lucide-react";
 import { Tip } from "@/components/ui/InfoTip";
 import TimeRangeSelector from "@/components/team/TimeRangeSelector";
 import SpendTrend from "@/components/team/SpendTrend";
@@ -75,21 +75,68 @@ export default function RepoAnalytics({ repoId }: { repoId: string }) {
         </div>
 
         <div className="rounded-lg border border-stone bg-white p-8">
+          {/* Clear headline */}
           <div className="mx-auto max-w-lg text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-silk">
               <BarChart3 className="h-6 w-6 text-gray" />
             </div>
-            <h3 className="text-lg font-semibold text-ink">No analytics data yet</h3>
+            <h3 className="text-lg font-semibold text-ink">
+              Analytics will appear here automatically
+            </h3>
             <p className="mt-2 text-sm text-gray">
-              Analytics are powered by real session data from your AI coding agent.
-              Once sessions are synced for this repository, you&apos;ll see cost tracking,
-              benchmarking, and carbon metrics here.
+              As you use AI coding agents in this repo, HAM captures session data
+              and populates your analytics. No manual setup needed beyond
+              initialization.
             </p>
           </div>
 
+          {/* How it works — 3 clear steps */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-lg border border-stone p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
+                  1
+                </span>
+                <span className="text-xs font-semibold text-ink">Connect</span>
+                <Check className="h-3.5 w-3.5 text-accent ml-auto" />
+              </div>
+              <p className="text-[11px] text-gray leading-relaxed">
+                You&apos;ve already connected this repo. HAM scanned it and found
+                your AI config files.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-stone p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
+                  2
+                </span>
+                <span className="text-xs font-semibold text-ink">Initialize</span>
+              </div>
+              <p className="text-[11px] text-gray leading-relaxed">
+                Initialize HAM from the <span className="font-medium text-ink">Files</span> tab
+                to add memory files and a config. This is what the compiler reads.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-stone p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-stone text-[10px] font-bold text-gray">
+                  3
+                </span>
+                <span className="text-xs font-semibold text-ink">Use your agent</span>
+              </div>
+              <p className="text-[11px] text-gray leading-relaxed">
+                Start coding with Claude, Cursor, Copilot, or any supported agent.
+                Session data flows into analytics automatically.
+              </p>
+            </div>
+          </div>
+
+          {/* What you'll see */}
           <div className="mt-8">
             <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-ash">
-              What you&apos;ll be able to track
+              What fills in as you use your agents
             </p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {PLANNED_METRICS.map((metric) => (
@@ -109,59 +156,23 @@ export default function RepoAnalytics({ repoId }: { repoId: string }) {
             </div>
           </div>
 
-          <div className="mt-8 space-y-4">
-            <p className="text-center text-xs font-medium uppercase tracking-wider text-ash">
-              Get started from your CLI
+          {/* CLI quick reference — simplified */}
+          <div className="mt-8">
+            <p className="text-center text-xs font-medium uppercase tracking-wider text-ash mb-3">
+              Optional CLI commands
             </p>
-
-            {/* Analytics commands */}
             <div className="rounded-lg border border-stone bg-silk/50 p-4">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray">Analytics</p>
-              <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
                 {[
-                  { cmd: "ham savings", desc: "Show token and cost savings report" },
-                  { cmd: "ham carbon", desc: "Show energy and CO2e efficiency stats" },
-                  { cmd: "ham dashboard", desc: "Launch the web dashboard at localhost:7777" },
-                  { cmd: "ham insights", desc: "Generate insights and write actionable items to inbox" },
-                ].map((row) => (
-                  <div key={row.cmd} className="flex items-baseline gap-3">
-                    <code className="shrink-0 rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-ink">{row.cmd}</code>
-                    <span className="text-[11px] text-gray">{row.desc}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Benchmarking commands */}
-            <div className="rounded-lg border border-stone bg-silk/50 p-4">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray">Benchmarking</p>
-              <div className="space-y-1.5">
-                {[
-                  { cmd: "ham baseline start", desc: "Begin 10-task baseline capture (no HAM memory loading)" },
-                  { cmd: "ham baseline stop", desc: "End baseline early, keep partial data" },
-                  { cmd: "ham benchmark", desc: "Compare baseline vs HAM task performance" },
-                  { cmd: "ham metrics clear", desc: "Delete all benchmark data" },
-                ].map((row) => (
-                  <div key={row.cmd} className="flex items-baseline gap-3">
-                    <code className="shrink-0 rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-ink">{row.cmd}</code>
-                    <span className="text-[11px] text-gray">{row.desc}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Setup & maintenance commands */}
-            <div className="rounded-lg border border-stone bg-silk/50 p-4">
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray">Setup & Maintenance</p>
-              <div className="space-y-1.5">
-                {[
-                  { cmd: "go ham", desc: "Set up HAM in your project (auto-detects everything)" },
-                  { cmd: "ham status", desc: "Show HAM version and setup status" },
+                  { cmd: "ham savings", desc: "View token and cost savings" },
+                  { cmd: "ham benchmark", desc: "Compare with vs without HAM" },
+                  { cmd: "ham insights", desc: "Generate actionable insights" },
                   { cmd: "ham audit", desc: "Check memory system health" },
-                  { cmd: "ham commands", desc: "Show all available commands" },
                 ].map((row) => (
                   <div key={row.cmd} className="flex items-baseline gap-3">
-                    <code className="shrink-0 rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-ink">{row.cmd}</code>
+                    <code className="shrink-0 rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-ink">
+                      {row.cmd}
+                    </code>
                     <span className="text-[11px] text-gray">{row.desc}</span>
                   </div>
                 ))}

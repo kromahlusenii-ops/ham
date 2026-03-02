@@ -172,6 +172,10 @@ export const MOCK_INIT_PREVIEW = {
       content: `# design-system\nShared React component library\n\n## Stack\n<!-- Fill in your project's tech stack -->\n\n## Rules\n<!-- Add project-specific rules for AI agents -->`,
     },
     {
+      path: ".ham/config.json",
+      content: `{\n  "hamVersion": "1.0.0",\n  "enabledImporters": ["ham", "claude", "cursor", "gemini", "aider", "copilot", "llama", "manus"],\n  "precedencePreset": "target-first",\n  "defaultBudget": 2000,\n  "ignoredPaths": ["node_modules", ".git", "dist", "build", ".next"],\n  "taxonomyVersion": "1.0.0"\n}`,
+    },
+    {
       path: ".memory/decisions.md",
       content: `# Architecture Decision Records\n\n## Template\n\n### ADR-NNN: Title\n- **Status**: proposed | accepted | superseded\n- **Date**: YYYY-MM-DD`,
     },

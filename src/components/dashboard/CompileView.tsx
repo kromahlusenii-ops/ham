@@ -1,7 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Play, Copy, Check, AlertTriangle, FileText, Layers, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+  Copy,
+  Check,
+  AlertTriangle,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  Settings2,
+  Sparkles,
+} from "lucide-react";
 import type { MemoryFile, MemoryFileType } from "@/lib/types";
 import { MEMORY_FILE_TYPE_CONFIG } from "@/lib/constants";
 import type { CompileReport, ConflictBlock, Target } from "@/lib/compiler/types";
@@ -12,16 +21,29 @@ interface CompileResult {
   cacheKey: string;
 }
 
-const TARGETS: { value: Target; label: string }[] = [
-  { value: "claude", label: "Claude" },
-  { value: "cursor", label: "Cursor" },
-  { value: "gemini", label: "Gemini" },
-  { value: "aider", label: "Aider" },
-  { value: "copilot", label: "Copilot" },
-  { value: "llama", label: "Llama" },
-  { value: "manus", label: "Manus" },
-  { value: "universal", label: "Universal" },
-];
+const TARGET_LABELS: Record<Target, string> = {
+  claude: "Claude",
+  cursor: "Cursor",
+  gemini: "Gemini",
+  aider: "Aider",
+  copilot: "Copilot",
+  llama: "Llama",
+  manus: "Manus",
+  universal: "Universal",
+};
+
+/** Map MemoryFileType → compiler Target (where there's a direct mapping) */
+const TYPE_TO_TARGET: Partial<Record<MemoryFileType, Target>> = {
+  claude: "claude",
+  cursor: "cursor",
+  gemini: "gemini",
+  copilot: "copilot",
+  llama: "llama",
+  manus: "manus",
+  ham: "universal",
+  agents: "universal",
+  windsurf: "cursor",
+};
 
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -29,31 +51,74 @@ function formatTokens(n: number): string {
   return n.toString();
 }
 
+/** Derive unique directory scopes from memory files */
+function getScopes(files: MemoryFile[]): string[] {
+  const dirs = new Set<string>();
+  for (const f of files) {
+    const parts = f.path.split("/");
+    // Walk up and collect every ancestor directory
+    for (let i = 1; i < parts.length; i++) {
+      dirs.add(parts.slice(0, i).join("/"));
+    }
+  }
+  return Array.from(dirs).sort();
+}
+
 export default function CompileView({
   repoId,
+  files,
 }: {
   repoId: string;
   files: MemoryFile[];
 }) {
-  const [targetPath, setTargetPath] = useState("");
-  const [target, setTarget] = useState<Target>("claude");
-  const [budget, setBudget] = useState(2000);
   const [loading, setLoading] = useState(false);
+  const [loadingTarget, setLoadingTarget] = useState<Target | null>(null);
   const [result, setResult] = useState<CompileResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(true);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [customPath, setCustomPath] = useState("");
+  const [customBudget, setCustomBudget] = useState(2000);
+  const [reportOpen, setReportOpen] = useState(false);
 
-  async function handleCompile() {
+  // Detect which tools are present in the repo
+  const detectedTools = useMemo(() => {
+    const toolMap = new Map<Target, { count: number; tokens: number }>();
+    for (const f of files) {
+      const target = TYPE_TO_TARGET[f.file_type];
+      if (!target) continue;
+      const existing = toolMap.get(target) ?? { count: 0, tokens: 0 };
+      existing.count++;
+      existing.tokens += f.token_count;
+      toolMap.set(target, existing);
+    }
+    // Sort by file count descending, then add Universal at the end
+    const entries = Array.from(toolMap.entries())
+      .filter(([t]) => t !== "universal")
+      .sort((a, b) => b[1].count - a[1].count);
+    // Always offer Universal
+    entries.push(["universal", { count: files.length, tokens: files.reduce((s, f) => s + f.token_count, 0) }]);
+    return entries;
+  }, [files]);
+
+  const scopes = useMemo(() => getScopes(files), [files]);
+
+  async function handleCompile(target: Target, path?: string, budget?: number) {
     setLoading(true);
+    setLoadingTarget(target);
     setError(null);
     setResult(null);
+    setReportOpen(false);
 
     try {
       const res = await fetch(`/api/repos/${repoId}/compile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetPath, target, budget }),
+        body: JSON.stringify({
+          targetPath: path ?? customPath ?? "",
+          target,
+          budget: budget ?? customBudget,
+        }),
       });
 
       if (!res.ok) {
@@ -67,6 +132,7 @@ export default function CompileView({
       setError(e instanceof Error ? e.message : "Compile failed");
     } finally {
       setLoading(false);
+      setLoadingTarget(null);
     }
   }
 
@@ -77,129 +143,156 @@ export default function CompileView({
     setTimeout(() => setCopied(false), 2000);
   }
 
+  // Empty state — no files to compile
+  if (files.length === 0) {
+    return (
+      <div className="rounded-lg border border-stone bg-white p-8 text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-silk">
+          <Sparkles className="h-6 w-6 text-gray" />
+        </div>
+        <h3 className="text-lg font-semibold text-ink">No config files found</h3>
+        <p className="mt-2 text-sm text-gray max-w-md mx-auto">
+          The compiler needs AI tool config files to work with. Run a scan first,
+          or initialize HAM to create the foundation files.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Info Section */}
-      <div className="rounded-lg border border-accent/20 bg-accent/5 overflow-hidden">
-        <button
-          onClick={() => setInfoOpen(!infoOpen)}
-          className="w-full flex items-center justify-between px-4 py-3 cursor-pointer"
-        >
-          <div className="flex items-center gap-2">
-            <Info className="h-4 w-4 text-accent" />
-            <span className="text-sm font-medium text-ink">How the Compiler Works</span>
-          </div>
-          {infoOpen
-            ? <ChevronUp className="h-4 w-4 text-gray" />
-            : <ChevronDown className="h-4 w-4 text-gray" />
-          }
-        </button>
-        {infoOpen && (
-          <div className="border-t border-accent/10 px-4 py-4 space-y-4">
-            <p className="text-sm text-gray">
-              The compiler reads every AI tool config file in your repo, normalizes
-              them into a common format, resolves conflicts, and produces a single
-              optimized context bundle for your target tool.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <InfoStep
-                number="1"
-                title="Set target path"
-                description="Enter the file you're working on. The compiler walks up the directory tree and collects only the config files in that path's ancestry."
-              />
-              <InfoStep
-                number="2"
-                title="Choose target tool"
-                description="Pick the tool you're compiling for. That tool's own config files get priority when rules conflict across tools."
-              />
-              <InfoStep
-                number="3"
-                title="Set token budget"
-                description="The compiler trims low-priority entries to stay under this limit. Hard constraints are kept first, preferences are trimmed first."
-              />
-            </div>
-            <div className="rounded-md bg-white/60 border border-accent/10 p-3">
-              <p className="text-xs font-medium text-ink mb-2">What you get back</p>
-              <ul className="text-xs text-gray space-y-1">
-                <li className="flex gap-2">
-                  <span className="text-accent font-medium">Bundle</span>
-                  Compiled context formatted for your target tool, ready to copy.
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-accent font-medium">Sources</span>
-                  Which files contributed and how many entries came from each.
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-accent font-medium">Conflicts</span>
-                  Where your tools disagree, which value won, and why.
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-accent font-medium">Tokens</span>
-                  How much of your budget was used, broken down by source.
-                </li>
-              </ul>
-            </div>
-          </div>
-        )}
+    <div className="space-y-5">
+      {/* Tool Cards — one click to compile */}
+      <div>
+        <p className="text-xs font-medium text-gray mb-3">
+          Pick a target tool to compile for
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {detectedTools.map(([target, info]) => {
+            const isLoading = loading && loadingTarget === target;
+            const isActive = result && result.report.target === target && !loading;
+            return (
+              <button
+                key={target}
+                onClick={() => handleCompile(target)}
+                disabled={loading}
+                className={`group relative rounded-lg border p-4 text-left transition-all cursor-pointer ${
+                  isActive
+                    ? "border-accent bg-accent/5 ring-1 ring-accent/20"
+                    : "border-stone bg-white hover:border-accent/40 hover:shadow-sm"
+                } disabled:opacity-60`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-semibold text-ink">
+                    {TARGET_LABELS[target]}
+                  </span>
+                  {isLoading && (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-stone border-t-accent" />
+                  )}
+                  {isActive && (
+                    <Check className="h-4 w-4 text-accent" />
+                  )}
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs text-gray">
+                    {target === "universal" ? "All" : info.count} file{info.count !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-[10px] text-stone">
+                    {formatTokens(info.tokens)} tokens
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Compile Controls */}
-      <div className="rounded-lg border border-stone bg-white p-4">
-        <h3 className="text-sm font-medium text-ink mb-4">Compile Context Bundle</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Target Path */}
-          <div className="md:col-span-2">
-            <label className="block text-xs text-gray mb-1">Target Path</label>
-            <input
-              type="text"
-              value={targetPath}
-              onChange={(e) => setTargetPath(e.target.value)}
-              placeholder="e.g. src/api/handler.ts"
-              className="w-full rounded-md border border-stone px-3 py-2 text-sm text-ink placeholder:text-stone focus:border-accent focus:outline-none"
-            />
-          </div>
-
-          {/* Target Tool */}
-          <div>
-            <label className="block text-xs text-gray mb-1">Target Tool</label>
-            <select
-              value={target}
-              onChange={(e) => setTarget(e.target.value as Target)}
-              className="w-full rounded-md border border-stone px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none"
-            >
-              {TARGETS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Budget */}
-          <div>
-            <label className="block text-xs text-gray mb-1">
-              Budget: {formatTokens(budget)} tokens
-            </label>
-            <input
-              type="range"
-              min={500}
-              max={5000}
-              step={100}
-              value={budget}
-              onChange={(e) => setBudget(Number(e.target.value))}
-              className="w-full accent-accent"
-            />
-          </div>
-        </div>
-
+      {/* Advanced Options — collapsed by default */}
+      <div className="rounded-lg border border-stone bg-white overflow-hidden">
         <button
-          onClick={handleCompile}
-          disabled={loading}
-          className="mt-4 inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50 cursor-pointer transition-colors"
+          onClick={() => setAdvancedOpen(!advancedOpen)}
+          className="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-silk/50 transition-colors"
         >
-          <Play className="h-4 w-4" />
-          {loading ? "Compiling..." : "Compile"}
+          <div className="flex items-center gap-2">
+            <Settings2 className="h-4 w-4 text-gray" />
+            <span className="text-xs font-medium text-gray">Advanced Options</span>
+          </div>
+          {advancedOpen ? (
+            <ChevronUp className="h-4 w-4 text-stone" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-stone" />
+          )}
         </button>
+
+        {advancedOpen && (
+          <div className="border-t border-stone px-4 py-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Target Path */}
+              <div>
+                <label className="block text-xs text-gray mb-1.5">
+                  Scope to directory
+                </label>
+                <input
+                  type="text"
+                  value={customPath}
+                  onChange={(e) => setCustomPath(e.target.value)}
+                  placeholder="Leave empty for full repo (recommended)"
+                  className="w-full rounded-md border border-stone px-3 py-2 text-sm text-ink placeholder:text-stone focus:border-accent focus:outline-none"
+                />
+                {scopes.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {scopes.slice(0, 8).map((scope) => (
+                      <button
+                        key={scope}
+                        onClick={() => setCustomPath(scope)}
+                        className={`rounded-full border px-2.5 py-0.5 text-[11px] font-mono transition-colors cursor-pointer ${
+                          customPath === scope
+                            ? "border-accent bg-accent/10 text-accent"
+                            : "border-stone text-gray hover:border-accent/40 hover:text-ink"
+                        }`}
+                      >
+                        {scope}
+                      </button>
+                    ))}
+                    {customPath && (
+                      <button
+                        onClick={() => setCustomPath("")}
+                        className="rounded-full border border-stone px-2.5 py-0.5 text-[11px] text-gray hover:text-ink cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Budget */}
+              <div>
+                <label className="block text-xs text-gray mb-1.5">
+                  Token budget: {formatTokens(customBudget)}
+                </label>
+                <input
+                  type="range"
+                  min={500}
+                  max={5000}
+                  step={100}
+                  value={customBudget}
+                  onChange={(e) => setCustomBudget(Number(e.target.value))}
+                  className="w-full accent-accent"
+                />
+                <div className="flex justify-between text-[10px] text-stone mt-1">
+                  <span>500</span>
+                  <span>5,000</span>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-stone leading-relaxed">
+              Scope limits which config files are included — only files on the path from root to
+              the target directory. Budget trims low-priority entries when the result exceeds the
+              token limit. Hard constraints are always kept first.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Error */}
@@ -214,109 +307,146 @@ export default function CompileView({
         <div className="rounded-lg border border-stone bg-white overflow-hidden">
           <div className="border-b border-stone px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h3 className="text-sm font-medium text-ink">Compiled Bundle</h3>
-              <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">
+              <h3 className="text-sm font-medium text-ink">
+                {TARGET_LABELS[result.report.target as Target]} Bundle
+              </h3>
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-0.5 text-[10px] font-medium text-accent">
                 {formatTokens(result.report.tokenCount)} tokens
               </span>
               <BudgetBar used={result.report.budgetUsed} />
             </div>
             <button
               onClick={handleCopy}
-              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray hover:text-ink hover:bg-silk transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90 transition-colors cursor-pointer"
             >
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? "Copied" : "Copy"}
+              {copied ? "Copied" : "Copy Bundle"}
             </button>
           </div>
-          <pre className="p-4 text-xs text-ink font-mono overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap bg-silk/30">
+          <pre className="p-4 text-xs text-ink font-mono overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap bg-silk/20">
             {result.bundle}
           </pre>
         </div>
       )}
 
-      {/* Compile Report */}
+      {/* Compile Report — collapsed */}
       {result && (
-        <div className="space-y-4">
-          {/* Sources */}
-          <ReportSection title="Sources" icon={FileText}>
-            <div className="space-y-2">
-              {result.report.sources.map((s) => {
-                const config = MEMORY_FILE_TYPE_CONFIG[s.source as MemoryFileType];
-                return (
-                  <div key={s.source} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {config && (
-                        <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${config.color}`}
-                        >
-                          {config.label}
-                        </span>
-                      )}
-                      <span className="text-xs text-gray">{s.entries} entries</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {s.files.map((f) => (
-                        <span key={f} className="font-mono text-[10px] text-gray bg-silk rounded px-1 py-0.5">
-                          {f}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+        <div className="rounded-lg border border-stone bg-white overflow-hidden">
+          <button
+            onClick={() => setReportOpen(!reportOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-silk/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-gray" />
+              <span className="text-sm font-medium text-ink">Compile Report</span>
+              {result.report.conflicts.length > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                  <AlertTriangle className="h-3 w-3" />
+                  {result.report.conflicts.length} conflict{result.report.conflicts.length !== 1 ? "s" : ""}
+                </span>
+              )}
+              <span className="text-[10px] text-stone">
+                {result.report.sources.length} source{result.report.sources.length !== 1 ? "s" : ""} · {result.report.includedEntries} entries
+              </span>
             </div>
-          </ReportSection>
+            {reportOpen ? (
+              <ChevronUp className="h-4 w-4 text-stone" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-stone" />
+            )}
+          </button>
 
-          {/* Conflicts */}
-          {result.report.conflicts.length > 0 && (
-            <ReportSection
-              title={`Conflicts (${result.report.conflicts.length})`}
-              icon={AlertTriangle}
-            >
-              <div className="space-y-3">
-                {result.report.conflicts.map((c, i) => (
-                  <ConflictCard key={i} conflict={c} />
-                ))}
+          {reportOpen && (
+            <div className="border-t border-stone p-4 space-y-5">
+              {/* Sources */}
+              <div>
+                <h4 className="text-xs font-medium text-gray uppercase tracking-wider mb-3">
+                  Sources
+                </h4>
+                <div className="space-y-2">
+                  {result.report.sources.map((s) => {
+                    const config = MEMORY_FILE_TYPE_CONFIG[s.source as MemoryFileType];
+                    return (
+                      <div key={s.source} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {config && (
+                            <span
+                              className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${config.color}`}
+                            >
+                              {config.label}
+                            </span>
+                          )}
+                          <span className="text-xs text-gray">{s.entries} entries</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {s.files.map((f) => (
+                            <span
+                              key={f}
+                              className="font-mono text-[10px] text-gray bg-silk rounded px-1 py-0.5"
+                            >
+                              {f}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </ReportSection>
-          )}
 
-          {/* Token Breakdown */}
-          <ReportSection title="Token Breakdown" icon={Layers}>
-            <div className="space-y-2">
-              {result.report.sources.map((s) => {
-                const config = MEMORY_FILE_TYPE_CONFIG[s.source as MemoryFileType];
-                const pct =
-                  result.report.tokenCount > 0
-                    ? Math.round(
-                        ((s.entries / result.report.includedEntries) * 100)
-                      )
-                    : 0;
-                return (
-                  <div key={s.source}>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      {config && (
-                        <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${config.color}`}
-                        >
-                          {config.label}
-                        </span>
-                      )}
-                      <span className="text-gray tabular-nums">
-                        {s.entries} entries · {pct}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-silk overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-accent transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
+              {/* Conflicts */}
+              {result.report.conflicts.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-medium text-gray uppercase tracking-wider mb-3">
+                    Conflicts
+                  </h4>
+                  <div className="space-y-3">
+                    {result.report.conflicts.map((c, i) => (
+                      <ConflictCard key={i} conflict={c} />
+                    ))}
                   </div>
-                );
-              })}
+                </div>
+              )}
+
+              {/* Token Breakdown */}
+              <div>
+                <h4 className="text-xs font-medium text-gray uppercase tracking-wider mb-3">
+                  Token Breakdown
+                </h4>
+                <div className="space-y-2">
+                  {result.report.sources.map((s) => {
+                    const config = MEMORY_FILE_TYPE_CONFIG[s.source as MemoryFileType];
+                    const pct =
+                      result.report.includedEntries > 0
+                        ? Math.round((s.entries / result.report.includedEntries) * 100)
+                        : 0;
+                    return (
+                      <div key={s.source}>
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          {config && (
+                            <span
+                              className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${config.color}`}
+                            >
+                              {config.label}
+                            </span>
+                          )}
+                          <span className="text-gray tabular-nums">
+                            {s.entries} entries · {pct}%
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-silk overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-accent transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-          </ReportSection>
+          )}
         </div>
       )}
     </div>
@@ -326,7 +456,8 @@ export default function CompileView({
 // ── Sub-components ───────────────────────────────────────────────────
 
 function BudgetBar({ used }: { used: number }) {
-  const color = used > 90 ? "bg-red-500" : used > 70 ? "bg-amber-500" : "bg-accent";
+  const color =
+    used > 90 ? "bg-red-500" : used > 70 ? "bg-amber-500" : "bg-accent";
   return (
     <div className="flex items-center gap-2">
       <div className="h-1.5 w-20 rounded-full bg-silk overflow-hidden">
@@ -336,48 +467,6 @@ function BudgetBar({ used }: { used: number }) {
         />
       </div>
       <span className="text-[10px] text-gray tabular-nums">{used}%</span>
-    </div>
-  );
-}
-
-function ReportSection({
-  title,
-  icon: Icon,
-  children,
-}: {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-lg border border-stone bg-white overflow-hidden">
-      <div className="border-b border-stone px-4 py-3 flex items-center gap-2">
-        <Icon className="h-4 w-4 text-gray" />
-        <h3 className="text-sm font-medium text-ink">{title}</h3>
-      </div>
-      <div className="p-4">{children}</div>
-    </div>
-  );
-}
-
-function InfoStep({
-  number,
-  title,
-  description,
-}: {
-  number: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-md bg-white/60 border border-accent/10 p-3">
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
-          {number}
-        </span>
-        <span className="text-xs font-medium text-ink">{title}</span>
-      </div>
-      <p className="text-xs text-gray pl-7">{description}</p>
     </div>
   );
 }
@@ -393,12 +482,20 @@ function ConflictCard({ conflict }: { conflict: ConflictBlock }) {
       </div>
       <div className="grid grid-cols-2 gap-2 mb-2">
         <div>
-          <span className="text-[10px] text-gray block mb-0.5">Winner ({conflict.winner.source})</span>
-          <code className="text-accent text-[11px]">{String(conflict.winner.value)}</code>
+          <span className="text-[10px] text-gray block mb-0.5">
+            Winner ({conflict.winner.source})
+          </span>
+          <code className="text-accent text-[11px]">
+            {String(conflict.winner.value)}
+          </code>
         </div>
         <div>
-          <span className="text-[10px] text-gray block mb-0.5">Loser ({conflict.loser.source})</span>
-          <code className="text-gray line-through text-[11px]">{String(conflict.loser.value)}</code>
+          <span className="text-[10px] text-gray block mb-0.5">
+            Loser ({conflict.loser.source})
+          </span>
+          <code className="text-gray line-through text-[11px]">
+            {String(conflict.loser.value)}
+          </code>
         </div>
       </div>
       <p className="text-gray italic">{conflict.suggestion}</p>
