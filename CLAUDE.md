@@ -1,27 +1,25 @@
-# HAM Landing Page
+# HAM — Hierarchical Agent Memory Skill
 
-## Stack
-- Next.js 16 (App Router, TypeScript, Turbopack)
-- Tailwind CSS v4 (CSS-first `@theme` config)
-- Framer Motion (scroll-reveal animations)
-- Lucide React (icons)
+## What This Is
+A Claude Code skill that sets up scoped CLAUDE.md files per directory to reduce token spend.
+
+## Key Files
+- `SKILL.md` — skill definition (triggers, setup logic, commands)
+- `dashboard/` — local Vite dashboard for analytics (launched via `ham dashboard`)
+- `scripts/` — update scripts
+- `templates.md` — CLAUDE.md templates for common directory types
+- `platforms.md` — platform compatibility notes
+- `references/` — reference docs
 
 ## Rules
-- All components use "use client" only when they need browser APIs or hooks
-- Green/forest color palette — tokens defined in `globals.css` via `@theme inline`
-- Copy and data live in `src/lib/constants.ts` — components import, never hardcode
-
-## Context Routing
-
-→ app: src/app/CLAUDE.md
-→ components: src/components/CLAUDE.md
-→ lib: src/lib/CLAUDE.md
+- This repo is skill-only — no landing page, no Next.js, no pro tier
+- Pro tier / landing page lives in `kromahlusenii-ops/ham-pro`
+- Keep the skill self-contained: no external dependencies beyond what `dashboard/` needs
 
 ## Agent Memory System
 
 ### Before Working
-- Read this file for global context → follow Context Routing to load the relevant subdirectory CLAUDE.md
-- If no Context Routing section, read target directory's CLAUDE.md before changes
+- Read this file for global context
 - Check .memory/decisions.md before architectural changes
 - Check .memory/patterns.md before implementing common functionality
 
