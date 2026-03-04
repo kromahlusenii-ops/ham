@@ -1,12 +1,55 @@
 ---
 name: ham
 ham_version: "2026.02.28"
-description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham commands", "ham help", "ham route", "ham update", "ham status", "ham benchmark", "ham baseline start", "ham baseline stop", "ham metrics clear", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
+description: Set up Hierarchical Agent Memory (HAM) — scoped CLAUDE.md files per directory that reduce token spend. Trigger on "go ham", "set up HAM", "ham commands", "ham help", "ham route", "ham remove", "ham update", "ham status", "ham benchmark", "ham baseline start", "ham baseline stop", "ham metrics clear", "HAM savings", "HAM stats", "HAM dashboard", "HAM sandwich", "HAM insights", or "HAM carbon".
+---
+
+## ⛔ HAM Pro Guard — run FIRST, before any command
+
+Before executing ANY HAM command, check for HAM Pro signals in the project:
+
+1. Check if `.ham/config.json` exists and contains `"pro": true`
+2. Check if `.ham/config.json` exists and `enabledImporters` contains more than just `"claude"`
+3. Check if any `AGENTS.md` files exist anywhere in the project (`**/AGENTS.md`)
+
+**If ANY of these conditions are true:**
+
+- If the command is **`go ham`**: allow it to proceed, but in **Pro-aware mode** (see Quick Start § Pro-Aware Mode below). Do NOT overwrite Pro-created files.
+- If the command is **`ham remove`**: allow it to proceed — it has its own Pro-aware logic that preserves Pro-owned files (see HAM Remove Command below).
+- For **all other commands**: print the following message and **STOP — do not execute the command**:
+
+```
+HAM Pro detected — this project is managed by HAM Pro.
+The HAM skill is disabled to avoid conflicts.
+Use the HAM Pro dashboard to manage this project.
+```
+
+Do not create, modify, or delete any files. Do not run any setup, analytics, benchmarking, or maintenance logic. Return immediately after printing the message.
+
+**If none of these conditions are true**, proceed with the command as normal below.
+
 ---
 
 # HAM (Hierarchical Agent Memory)
 
 Scoped memory system that reduces context token spend per request.
+
+## HAM Pro Compatibility
+
+HAM Pro is a separate product that extends HAM with multi-agent support. When Pro is active in a project, it creates **AGENTS.md** files alongside CLAUDE.md files. These are context files for non-Claude agents (Cursor, Copilot, Windsurf, Gemini, etc.).
+
+**Ownership boundary:**
+
+| File | Owner | Managed by |
+|------|-------|------------|
+| `CLAUDE.md` | HAM skill | This skill — create, update, route |
+| `AGENTS.md` | HAM Pro | Pro dashboard only — never touch |
+
+**Rules:**
+- NEVER create AGENTS.md files — Pro creates them via its dashboard
+- NEVER modify AGENTS.md files — Pro controls their content and sync
+- NEVER delete AGENTS.md files — they may be actively consumed by other agents
+- If you encounter AGENTS.md files during scanning (e.g. `ham route`, `ham audit`), acknowledge their existence but do not include them in any write operations
 
 ## HAM Commands
 
@@ -21,6 +64,7 @@ When user runs this command, display all available HAM commands:
 │                                                              │
 │  SETUP                                                       │
 │  go ham              Set up HAM in your project              │
+│  ham remove          Remove HAM from your project (safe)     │
 │  ham update          Update HAM to the latest version        │
 │  ham status          Show HAM version and setup status       │
 │  ham route           Add/update Context Routing in CLAUDE.md │
@@ -55,6 +99,38 @@ When user says "go ham":
 3. **Confirm setup** — list files created, tell user to run `HAM savings` to see impact
 
 Only ask questions if detection fails.
+
+### Pro-Aware Mode
+
+When `go ham` runs and the Pro guard (above) detected Pro signals, run in **Pro-aware mode** instead of the normal flow:
+
+1. **Read the Pro manifest** — load `.ham/config.json` and collect the list of directories Pro has already scaffolded. Look for a `scaffolded` or `files` array, or scan for existing CLAUDE.md files that contain a `<!-- managed by HAM Pro -->` comment or any Pro-identifying marker.
+
+2. **Inventory existing files** — glob for all `**/CLAUDE.md` and `**/AGENTS.md` in the project. Build two sets:
+   - `pro_covered`: directories that already have a CLAUDE.md (created by Pro)
+   - `agents_files`: all AGENTS.md paths (never touch these)
+
+3. **Skip Pro-covered directories** — for every directory where Pro already created a CLAUDE.md, **do not create or overwrite** that file. Leave it exactly as Pro set it up.
+
+4. **Fill gaps only** — if the skill's normal detection (platform + maturity) would create CLAUDE.md files in directories that Pro has NOT covered, create them as usual. These are directories Pro didn't scaffold.
+
+5. **Never touch AGENTS.md** — do not create, modify, or delete any AGENTS.md file, regardless of context.
+
+6. **Print summary** — after setup, print:
+
+```
+HAM Pro detected — running in Pro-aware mode.
+Skipped X directories already scaffolded by HAM Pro.
+Created Y new CLAUDE.md files in uncovered directories.
+AGENTS.md files left untouched.
+```
+
+If Pro covered everything and there are no gaps, print:
+
+```
+HAM Pro detected — all directories already scaffolded.
+No changes made. Use the HAM Pro dashboard to manage this project.
+```
 
 ## Onboarding Flow
 
@@ -509,6 +585,133 @@ After presenting results:
 - If `.memory/audit-log.md` doesn't exist, create it from the template in `references/templates.md`.
 - Append an entry to `.memory/audit-log.md` with the date, number of issues found, and a one-line summary.
 - If the table exceeds 5 entries, remove the oldest row (keeping the header).
+
+## HAM Remove Command
+
+**Trigger:** "ham remove"
+
+Safely removes HAM from a project while preserving Pro-owned and user-authored files.
+
+**Note:** This command is EXEMPT from the Pro guard — it must always run so users can remove the skill's files from any project, including Pro-managed ones.
+
+### Step 1: Detect Pro
+
+Run the same Pro detection checks as the guard:
+- `.ham/config.json` with `"pro": true`
+- `.ham/config.json` with `enabledImporters` containing more than just `"claude"`
+- Any `AGENTS.md` files in the project
+
+Set `pro_detected = true` or `false`.
+
+### Step 2: Inventory files
+
+Scan the project and categorize every HAM-related file:
+
+**Skill-owned (always safe to delete):**
+- `.memory/decisions.md`
+- `.memory/patterns.md`
+- `.memory/inbox.md`
+- `.memory/audit-log.md`
+- `.memory/baseline.json`
+- `.ham/version`
+- `.ham/metrics/` (entire directory — `state.json`, `*.jsonl`)
+- All subdirectory `CLAUDE.md` files created by the skill (not root)
+- The `## Agent Memory System` and `## Context Routing` sections inside root `CLAUDE.md`
+
+**Pro-owned (never delete):**
+- `.ham/config.json`
+- All `AGENTS.md` files anywhere in the project
+
+**User files (preserve):**
+- Root `CLAUDE.md` itself (only strip HAM-added sections, keep everything else)
+- Any files not created by HAM
+
+### Step 3: Show dry-run
+
+Present the plan to the user before doing anything:
+
+If `pro_detected`:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ham remove — dry run (Pro detected)                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  WILL DELETE (skill-owned):                                  │
+│    .memory/decisions.md                                      │
+│    .memory/patterns.md                                       │
+│    .memory/inbox.md                                          │
+│    .memory/audit-log.md                                      │
+│    .memory/baseline.json                                     │
+│    .ham/version                                              │
+│    .ham/metrics/  (entire directory)                          │
+│    src/components/CLAUDE.md                                   │
+│    src/lib/CLAUDE.md                                          │
+│    [... list all subdirectory CLAUDE.md files found]          │
+│                                                              │
+│  WILL EDIT (root CLAUDE.md):                                 │
+│    Remove "Agent Memory System" section                      │
+│    Remove "Context Routing" section                          │
+│    Keep: Stack, Rules, Commands, and all other sections      │
+│                                                              │
+│  WILL KEEP (Pro-owned):                                      │
+│    .ham/config.json                                           │
+│    AGENTS.md  (and any subdirectory AGENTS.md files)         │
+│                                                              │
+│  Total: X files deleted, 1 file edited, Y files kept        │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+If `!pro_detected`:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ham remove — dry run                                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  WILL DELETE:                                                │
+│    .memory/  (entire directory)                               │
+│    .ham/  (entire directory)                                  │
+│    src/components/CLAUDE.md                                   │
+│    src/lib/CLAUDE.md                                          │
+│    [... list all subdirectory CLAUDE.md files found]          │
+│                                                              │
+│  WILL EDIT (root CLAUDE.md):                                 │
+│    Remove "Agent Memory System" section                      │
+│    Remove "Context Routing" section                          │
+│    Keep: Stack, Rules, Commands, and all other sections      │
+│                                                              │
+│  Total: X files deleted, 1 file edited                       │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Step 4: Confirm
+
+Ask the user: **"Proceed with removal? (yes/no)"**
+
+Do NOT proceed without explicit confirmation.
+
+### Step 5: Execute
+
+If confirmed, delete and edit files exactly as shown in the dry-run. Process in this order:
+
+1. Delete subdirectory CLAUDE.md files
+2. Delete `.memory/` contents (or entire directory if no Pro)
+3. Delete `.ham/metrics/` and `.ham/version` (or entire `.ham/` if no Pro)
+4. Edit root CLAUDE.md — remove only the `## Agent Memory System` and `## Context Routing` sections, preserve everything else
+5. If `.memory/` directory is now empty, remove it
+6. If `.ham/` directory is now empty (all contents deleted, no `config.json`), remove it
+
+### Step 6: Report
+
+```
+HAM removed.
+Deleted: X files
+Edited: root CLAUDE.md (removed HAM sections)
+Kept: Y Pro-owned files  ← only show this line if pro_detected
+```
 
 ## HAM Dashboard Command
 
