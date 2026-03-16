@@ -62,7 +62,10 @@ async function parseOneSession(filePath, projectPath, routingPaths) {
     primaryDirectory: null,
     messageCount: 0,
     toolCallCount: 0,
+    turns: [],
   };
+
+  let currentTurn = null;
 
   const rl = createInterface({
     input: createReadStream(filePath),
@@ -102,10 +105,19 @@ async function parseOneSession(filePath, projectPath, routingPaths) {
       // Token usage
       const usage = msg.usage;
       if (usage) {
-        session.inputTokens += usage.input_tokens || 0;
-        session.outputTokens += usage.output_tokens || 0;
-        session.cacheReadTokens += usage.cache_read_input_tokens || 0;
+        const inTok = usage.input_tokens || 0;
+        const outTok = usage.output_tokens || 0;
+        const cacheRead = usage.cache_read_input_tokens || 0;
+        session.inputTokens += inTok;
+        session.outputTokens += outTok;
+        session.cacheReadTokens += cacheRead;
         session.cacheCreationTokens += usage.cache_creation_input_tokens || 0;
+
+        if (currentTurn) {
+          currentTurn.inputTokens += inTok;
+          currentTurn.outputTokens += outTok;
+          currentTurn.cacheReadTokens += cacheRead;
+        }
       }
 
       // Model detection
@@ -119,10 +131,12 @@ async function parseOneSession(filePath, projectPath, routingPaths) {
         for (const block of contents) {
           if (block.type === 'tool_use') {
             session.toolCallCount++;
+            if (currentTurn) currentTurn.toolCalls++;
 
             if (block.name === 'Read' && block.input?.file_path) {
               const fp = block.input.file_path;
               session.fileReads.push(fp);
+              if (currentTurn) currentTurn.fileReads.push(fp);
 
               // Check if it's a CLAUDE.md read
               if (basename(fp) === 'CLAUDE.md') {
@@ -140,10 +154,27 @@ async function parseOneSession(filePath, projectPath, routingPaths) {
       }
     }
 
-    // Also count user messages
+    // Also count user messages and track turns
     if (msg.role === 'user') {
       session.messageCount++;
+      // Push previous turn (if it has assistant data) and start a new one
+      if (currentTurn && currentTurn.inputTokens > 0) {
+        session.turns.push(currentTurn);
+      }
+      currentTurn = {
+        turnIndex: session.turns.length,
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheReadTokens: 0,
+        fileReads: [],
+        toolCalls: 0,
+      };
     }
+  }
+
+  // Push the final turn
+  if (currentTurn && currentTurn.inputTokens > 0) {
+    session.turns.push(currentTurn);
   }
 
   // Calculate timestamps

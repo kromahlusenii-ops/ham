@@ -3,7 +3,7 @@ import { readFile, readFile as readFileAsync } from 'fs/promises';
 import { join, extname } from 'path';
 import { fileURLToPath } from 'url';
 import { parseSessions } from './parse-sessions.js';
-import { calculateStats, calculateDaily, calculateDirectories } from './calculate-stats.js';
+import { calculateStats, calculateDaily, calculateDirectories, calculateSessionSavings } from './calculate-stats.js';
 import { checkContextHealth } from './context-health.js';
 import { generateInsights, generateStructuredInsights } from './insights.js';
 import { calculateCarbon, calculateCarbonDaily, calculateCarbonSessions, calculateCarbonFiles } from './carbon.js';
@@ -97,10 +97,8 @@ async function handleApi(pathname, params, res) {
         break;
 
       case '/api/sessions': {
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - days);
-        data = cachedSessions
-          .filter(s => s.startTime && new Date(s.startTime) >= cutoff)
+        const enriched = calculateSessionSavings(cachedSessions, days);
+        data = enriched
           .slice(0, limit)
           .map(s => ({
             sessionId: s.sessionId,
@@ -111,12 +109,24 @@ async function handleApi(pathname, params, res) {
             inputTokens: s.inputTokens,
             outputTokens: s.outputTokens,
             cacheReadTokens: s.cacheReadTokens,
-            fileReads: s.fileReads.length,
+            fileReads: Array.isArray(s.fileReads) ? s.fileReads.length : s.fileReads,
             isHamOn: s.isHamOn,
             routingStatus: s.routingStatus,
             primaryDirectory: s.primaryDirectory,
             messageCount: s.messageCount,
             toolCallCount: s.toolCallCount,
+            tokensSaved: s.tokensSaved,
+            costSaved: s.costSaved,
+            turns: (s.turns || []).map(t => ({
+              turnIndex: t.turnIndex,
+              inputTokens: t.inputTokens,
+              outputTokens: t.outputTokens,
+              cacheReadTokens: t.cacheReadTokens,
+              fileReads: Array.isArray(t.fileReads) ? t.fileReads.length : 0,
+              toolCalls: t.toolCalls,
+              tokensSaved: t.tokensSaved,
+              costSaved: t.costSaved,
+            })),
           }));
         break;
       }

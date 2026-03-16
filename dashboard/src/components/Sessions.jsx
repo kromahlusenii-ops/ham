@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import InfoTip from './InfoTip.jsx';
 
 function formatTokens(n) {
@@ -35,7 +35,15 @@ function modelShort(model) {
   return model.split('-').slice(-1)[0];
 }
 
+function formatCost(n) {
+  if (n === 0) return '$0.00';
+  if (n < 0.01) return '<$0.01';
+  return '$' + n.toFixed(2);
+}
+
 export default function Sessions({ sessions }) {
+  const [expandedId, setExpandedId] = useState(null);
+
   if (!sessions || sessions.length === 0) {
     return (
       <div className="empty-state">
@@ -45,11 +53,13 @@ export default function Sessions({ sessions }) {
     );
   }
 
+  const colCount = 13;
+
   return (
     <div className="table-card">
       <h3>
         Session history
-        <InfoTip text={'Every Claude Code session in the selected period. Duration is wall-clock time. HAM shows whether hierarchical memory was active \u2014 ON sessions typically use fewer tokens and cost less. Cache Read is tokens Claude remembered from recent context instead of re-reading files.'} />
+        <InfoTip text={'Every Claude Code session in the selected period. Duration is wall-clock time. HAM shows whether hierarchical memory was active \u2014 ON sessions typically use fewer tokens and cost less. Cache Read is tokens Claude remembered from recent context instead of re-reading files. Tokens Saved and Cost Saved show estimated savings from HAM context routing.'} />
       </h3>
       <table>
         <thead>
@@ -64,35 +74,82 @@ export default function Sessions({ sessions }) {
             <th>File Reads</th>
             <th>Input Tokens</th>
             <th>Cache Read</th>
+            <th>Tokens Saved</th>
+            <th>Cost Saved</th>
             <th>Directory</th>
           </tr>
         </thead>
         <tbody>
-          {sessions.map(s => (
-            <tr key={s.sessionId}>
-              <td className="mono">{formatTime(s.startTime)}</td>
-              <td>{formatDuration(s.durationMs)}</td>
-              <td>{modelShort(s.model)}</td>
-              <td>
-                <span className={`ham-badge ${s.isHamOn ? 'on' : 'off'}`}>
-                  {s.isHamOn ? 'ON' : 'OFF'}
-                </span>
-              </td>
-              <td>
-                <span className={`routing-badge ${s.routingStatus || 'unrouted'}`}>
-                  {s.routingStatus === 'routed' ? 'Routed'
-                    : s.routingStatus === 'likely' ? 'Likely'
-                    : 'Unrouted'}
-                </span>
-              </td>
-              <td>{s.messageCount}</td>
-              <td>{s.toolCallCount}</td>
-              <td>{s.fileReads}</td>
-              <td>{formatTokens(s.inputTokens)}</td>
-              <td>{formatTokens(s.cacheReadTokens)}</td>
-              <td className="mono">{s.primaryDirectory || '-'}</td>
-            </tr>
-          ))}
+          {sessions.map(s => {
+            const isExpanded = expandedId === s.sessionId;
+            return (
+              <React.Fragment key={s.sessionId}>
+                <tr
+                  onClick={() => setExpandedId(isExpanded ? null : s.sessionId)}
+                  style={{ cursor: 'pointer' }}
+                  className={isExpanded ? 'expanded-row' : ''}
+                >
+                  <td className="mono">{formatTime(s.startTime)}</td>
+                  <td>{formatDuration(s.durationMs)}</td>
+                  <td>{modelShort(s.model)}</td>
+                  <td>
+                    <span className={`ham-badge ${s.isHamOn ? 'on' : 'off'}`}>
+                      {s.isHamOn ? 'ON' : 'OFF'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`routing-badge ${s.routingStatus || 'unrouted'}`}>
+                      {s.routingStatus === 'routed' ? 'Routed'
+                        : s.routingStatus === 'likely' ? 'Likely'
+                        : 'Unrouted'}
+                    </span>
+                  </td>
+                  <td>{s.messageCount}</td>
+                  <td>{s.toolCallCount}</td>
+                  <td>{s.fileReads}</td>
+                  <td>{formatTokens(s.inputTokens)}</td>
+                  <td>{formatTokens(s.cacheReadTokens)}</td>
+                  <td>{s.isHamOn ? formatTokens(s.tokensSaved || 0) : '\u2014'}</td>
+                  <td>{s.isHamOn ? formatCost(s.costSaved || 0) : '\u2014'}</td>
+                  <td className="mono">{s.primaryDirectory || '-'}</td>
+                </tr>
+                {isExpanded && s.turns && s.turns.length > 0 && (
+                  <tr className="turn-detail-row">
+                    <td colSpan={colCount}>
+                      <table className="turn-table">
+                        <thead>
+                          <tr>
+                            <th>Turn #</th>
+                            <th>Input Tokens</th>
+                            <th>Output Tokens</th>
+                            <th>Cache Read</th>
+                            <th>File Reads</th>
+                            <th>Tool Calls</th>
+                            <th>Tokens Saved</th>
+                            <th>Cost Saved</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {s.turns.map((t, i) => (
+                            <tr key={i}>
+                              <td>{(t.turnIndex ?? i) + 1}</td>
+                              <td>{formatTokens(t.inputTokens)}</td>
+                              <td>{formatTokens(t.outputTokens)}</td>
+                              <td>{formatTokens(t.cacheReadTokens || 0)}</td>
+                              <td>{t.fileReads || 0}</td>
+                              <td>{t.toolCalls || 0}</td>
+                              <td>{s.isHamOn ? formatTokens(t.tokensSaved || 0) : '\u2014'}</td>
+                              <td>{s.isHamOn ? formatCost(t.costSaved || 0) : '\u2014'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>

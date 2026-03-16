@@ -167,6 +167,42 @@ export function calculateDirectories(sessions, days = 30) {
     .sort((a, b) => b.sessions - a.sessions);
 }
 
+/**
+ * Calculate per-session and per-turn savings.
+ * Returns sessions augmented with tokensSaved, costSaved, and enriched turns.
+ */
+export function calculateSessionSavings(sessions, days = 30) {
+  const filtered = filterByDays(sessions, days);
+  const { hamOn, hamOff } = splitByHam(filtered);
+  const baseline = calculateBaseline(hamOn, hamOff);
+
+  return filtered.map(s => {
+    if (!s.isHamOn) {
+      return {
+        ...s,
+        tokensSaved: 0,
+        costSaved: 0,
+        turns: (s.turns || []).map(t => ({ ...t, tokensSaved: 0, costSaved: 0 })),
+      };
+    }
+
+    const nonClaudeReads = s.fileReads.filter(f => !f.endsWith('/CLAUDE.md') && !f.endsWith('CLAUDE.md')).length || 1;
+    const expected = nonClaudeReads * baseline.avgTokensPerRead;
+    const tokensSaved = Math.max(0, expected - s.inputTokens);
+    const costSaved = Math.round(calculateCost(tokensSaved, 0, s.model || 'claude-sonnet-4-6') * 100) / 100;
+
+    const turns = (s.turns || []).map(t => {
+      const turnNonClaudeReads = t.fileReads.filter(f => !f.endsWith('/CLAUDE.md') && !f.endsWith('CLAUDE.md')).length;
+      const turnExpected = turnNonClaudeReads * baseline.avgTokensPerRead;
+      const turnSaved = Math.max(0, turnExpected - t.inputTokens);
+      const turnCostSaved = Math.round(calculateCost(turnSaved, 0, s.model || 'claude-sonnet-4-6') * 100) / 100;
+      return { ...t, tokensSaved: turnSaved, costSaved: turnCostSaved };
+    });
+
+    return { ...s, tokensSaved, costSaved, turns };
+  });
+}
+
 // --- Helpers ---
 
 function filterByDays(sessions, days) {
