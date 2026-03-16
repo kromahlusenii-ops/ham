@@ -680,6 +680,16 @@ tr:hover td {
   font-family: var(--mono);
 }
 
+.footer-link {
+  color: #ccc;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footer-link:hover {
+  color: var(--text-muted);
+}
+
 /* Insight cards */
 .insights-header {
   display: flex;

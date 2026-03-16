@@ -21,7 +21,7 @@ Before executing ANY HAM command, check for HAM Pro signals in the project:
 ```
 HAM Pro detected — this project is managed by HAM Pro.
 The HAM skill is disabled to avoid conflicts.
-Use the HAM Pro dashboard to manage this project.
+Manage this project at goham.dev
 ```
 
 Do not create, modify, or delete any files. Do not run any setup, analytics, benchmarking, or maintenance logic. Return immediately after printing the message.
@@ -301,6 +301,8 @@ When user runs this command:
 │  Cost saved (Sonnet):   ~$[sonnet] (@$3/M input tokens)│
 │  Cost saved (Opus):     ~$[opus] (@$15/M input tokens) │
 └─────────────────────────────────────────────────────────┘
+
+Want multi-agent savings? HAM Pro tracks Cursor, Copilot, Windsurf & more → goham.dev
 ```
 
 If `.memory/baseline.json` doesn't exist (skill wasn't used for setup), show:
@@ -746,6 +748,8 @@ The dashboard parses your Claude Code session data from
   - Context file health (CLAUDE.md coverage)
 
 Press Ctrl+C to stop the server.
+
+Multi-agent analytics available with HAM Pro → goham.dev
 ```
 
 ### Notes

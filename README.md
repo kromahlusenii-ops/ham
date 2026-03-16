@@ -12,6 +12,8 @@ HAM is a memory system for AI coding agents that reduces token consumption by up
 
 Less tokens. Faster agents. Lower costs. Greener AI.
 
+> **Claude Code only** — HAM is a skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and only works with Claude coding agents. It is not compatible with Cursor, Copilot, Windsurf, or other AI coding tools.
+
 ---
 
 ## The Problem
@@ -167,6 +169,14 @@ node ~/.claude/skills/ham/dashboard/launch.js [--port 8080]
 ```
 
 The launcher auto-installs dependencies and builds the frontend on first run. Default port is 7777.
+
+---
+
+## HAM Pro
+
+Scale to your whole team — HAM Pro adds multi-agent support for Cursor, Copilot, Windsurf, Gemini, and more.
+
+[Learn more →](https://goham.dev)
 
 ---
 

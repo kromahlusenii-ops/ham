@@ -55,7 +55,13 @@ export default function Layout({ tab, setTab, days, setDays, stats, children }) 
 
       {children.content}
 
-      <div className="footer">ham v{stats?.hamVersion || '0.2.0'}</div>
+      <div className="footer">
+        ham v{stats?.hamVersion || '0.2.0'}
+        {' · '}
+        <a href="https://goham.dev" target="_blank" rel="noopener noreferrer" className="footer-link">
+          HAM Pro
+        </a>
+      </div>
     </div>
   );
 }

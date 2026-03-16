@@ -55,6 +55,7 @@ export default function Overview({ stats, daily, carbon, benchmark, benchmarkCom
       <div className="empty-state">
         <h3>No session data</h3>
         <p>No Claude Code sessions found for this project.</p>
+        <p className="text-muted" style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>Track multiple agents with <a href="https://goham.dev" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)' }}>HAM Pro</a></p>
       </div>
     );
   }

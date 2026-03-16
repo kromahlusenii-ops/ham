@@ -49,6 +49,7 @@ export default function Sessions({ sessions }) {
       <div className="empty-state">
         <h3>No sessions</h3>
         <p>No Claude Code sessions found for the selected period.</p>
+        <p style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>Track multiple agents with <a href="https://goham.dev" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)' }}>HAM Pro</a></p>
       </div>
     );
   }

@@ -129,6 +129,7 @@ export default function Directories({ directories, health }) {
       <div className="empty-state">
         <h3>No directory data</h3>
         <p>No file reads attributed to directories in the selected period.</p>
+        <p style={{ marginTop: 8, fontSize: 13, color: 'var(--text-muted)' }}>Track multiple agents with <a href="https://goham.dev" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)' }}>HAM Pro</a></p>
       </div>
     );
   }

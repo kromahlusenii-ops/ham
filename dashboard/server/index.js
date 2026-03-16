@@ -68,6 +68,7 @@ export async function startServer(port = 7777) {
 
   server.listen(port, () => {
     console.log(`  Dashboard running at http://localhost:${port}\n`);
+    console.log(`  HAM Pro: https://goham.dev\n`);
     console.log(`  Press Ctrl+C to stop\n`);
   });
 }
