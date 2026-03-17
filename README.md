@@ -172,6 +172,14 @@ The launcher auto-installs dependencies and builds the frontend on first run. De
 
 ---
 
+## Git
+
+HAM automatically adds its generated files to `.gitignore` during setup.
+All HAM files are local to your machine — they won't be pushed to your repo.
+`ham remove` cleans up the `.gitignore` entries.
+
+---
+
 ## HAM Pro
 
 Scale to your whole team — HAM Pro adds multi-agent support for Cursor, Copilot, Windsurf, Gemini, and more.
