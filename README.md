@@ -8,7 +8,7 @@
 
 **Fewer tokens. Greener AI.**
 
-HAM is a memory system for AI coding agents that reduces token consumption by up to 50%. Instead of loading your entire project context on every request, HAM scopes memory to the directory you're actually working in.
+HAM is a memory system for AI coding agents that reduces token consumption by up to 80%. Instead of loading your entire project context on every request, HAM scopes memory to the directory you're actually working in.
 
 Less tokens. Faster agents. Lower costs. Greener AI.
 
@@ -52,10 +52,10 @@ The agent reads 2-3 small files instead of one massive context dump. Your starti
 
 | | Before HAM | After HAM |
 |---|---|---|
-| **Context per prompt** | 4,000 - 12,000 tokens | 2,000 - 6,000 tokens |
-| **50-prompt session** | 200K - 600K tokens | 100K - 300K tokens |
-| **Context window used at start** | Up to 47% | Under 25% |
-| **Token reduction** | — | **Up to 50%** |
+| **Context per prompt** | 4,000 - 12,000 tokens | 800 - 2,400 tokens |
+| **50-prompt session** | 200K - 600K tokens | 40K - 120K tokens |
+| **Context window used at start** | Up to 47% | Under 10% |
+| **Token reduction** | — | **Up to 80%** |
 
 ---
 
