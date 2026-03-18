@@ -263,7 +263,9 @@ This puts the agent in baseline mode: the next 10 tasks will be logged to `.ham/
 
 ### Step 5: Confirm Setup
 
-After creating files, output:
+After creating files, measure root CLAUDE.md token count (chars ÷ 4). Then output:
+
+**If root CLAUDE.md ≤ 3,000 tokens:**
 
 ```
 HAM v2026.02.28 setup complete. Created [N] files.
@@ -274,6 +276,56 @@ Benchmarking initialized — next 10 tasks capture baseline.
 Run "HAM savings" to see your token and cost savings.
 Run "ham benchmark" after the baseline to see performance comparison.
 ```
+
+**If root CLAUDE.md > 3,000 tokens:**
+
+```
+HAM v2026.02.28 setup complete. Created [N] files.
+Added HAM files to .gitignore — these won't be committed.
+Baseline captured in .memory/baseline.json
+Benchmarking initialized — next 10 tasks capture baseline.
+
+⚠ Your root CLAUDE.md is [X] tokens — HAM works best when it's under 250.
+
+HAM created scoped CLAUDE.md files in your subdirectories, but your root file
+still has all your context in one place. To get the full savings, move
+directory-specific rules into the matching subdirectory CLAUDE.md files and
+keep only global context (stack, project-wide rules) in root.
+
+Here's what I found that may belong in subdirectory files:
+[List sections/content in root CLAUDE.md that reference specific directories
+ that have a subdirectory CLAUDE.md. For each, show:]
+  → "[section/topic]" may belong in [dir]/CLAUDE.md
+
+Want me to help move these? I'll show you each one and you decide where it goes.
+```
+
+#### Interactive migration (if user accepts)
+
+If the user says yes to the migration offer:
+
+1. **Identify candidates** — scan root CLAUDE.md for content that references specific subdirectories (e.g., mentions "api", "components", "db" that match actual project directories with CLAUDE.md files). Also identify content blocks that are clearly directory-scoped (API patterns, component conventions, DB schemas, etc.).
+
+2. **Present each candidate** — show the user one section at a time:
+   ```
+   This section appears to be about [topic]:
+   ---
+   [quoted content]
+   ---
+   Move to [dir]/CLAUDE.md? (yes / no / somewhere else)
+   ```
+
+3. **Wait for the user's decision on each one** — never move content without explicit confirmation. If the user says "somewhere else", ask which directory.
+
+4. **Move confirmed content** — append the content to the target subdirectory CLAUDE.md and remove it from root CLAUDE.md.
+
+5. **Report results:**
+   ```
+   Migrated [N] sections from root CLAUDE.md.
+   Root CLAUDE.md is now [X] tokens (was [Y]).
+   ```
+
+If the user declines the migration, proceed normally — the setup is still complete and functional, just not optimally scoped.
 
 ## HAM Savings Command
 
