@@ -13,8 +13,21 @@ const state = getBenchmarkState(projectPath);
 const summary = calculateBenchmarkSummary(projectPath, sessions, days);
 const comparison = calculateBenchmarkComparison(projectPath, sessions, days);
 
+// Collect and display warnings
+const allWarnings = [
+  ...(summary.warnings || []),
+  ...(comparison.warnings || []),
+];
+if (state.warning) allWarnings.push(state.warning);
+if (allWarnings.length > 0) {
+  for (const w of allWarnings) {
+    console.warn(`⚠ ${w}`);
+  }
+  console.warn('');
+}
+
 if (showJson) {
-  console.log(JSON.stringify({ state, summary, comparison }, null, 2));
+  console.log(JSON.stringify({ state, summary, comparison, warnings: allWarnings }, null, 2));
   process.exit(0);
 }
 
@@ -75,7 +88,7 @@ if (state.mode === 'baseline') {
   console.log('  benchmarking auto-transitions to active mode.');
   console.log('');
   if (progress > 0) {
-    const tasks = getRecentTasks(projectPath, sessions, progress, days);
+    const { tasks } = getRecentTasks(projectPath, sessions, progress, days);
     const baselineTasks = tasks.filter(t => !t.ham_active);
     if (baselineTasks.length > 0) {
       const avgTime = baselineTasks.reduce((s, t) => s + t.durationSec, 0) / baselineTasks.length;

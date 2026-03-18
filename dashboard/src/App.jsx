@@ -53,7 +53,7 @@ export default function App() {
         setCarbonSessions(carbS);
         setCarbonFiles(carbF);
         setBenchmark(bench);
-        setBenchmarkTasks(benchT);
+        setBenchmarkTasks(benchT?.tasks || benchT || []);
         setBenchmarkComparison(benchC);
       })
       .catch(err => console.error('Failed to fetch data:', err))

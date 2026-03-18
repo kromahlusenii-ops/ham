@@ -10,7 +10,8 @@ import { getProjectSessionDir } from './utils.js';
  */
 export async function parseSessions(projectPath) {
   const sessionDir = getProjectSessionDir(projectPath);
-  const routingPaths = extractRoutingPaths(projectPath);
+  const { paths: routingPaths, content: rootClaudeMdContent } = extractRoutingPaths(projectPath);
+  const rootHasAgentMemory = rootClaudeMdContent.includes('## Agent Memory System');
 
   let files;
   try {
@@ -29,7 +30,7 @@ export async function parseSessions(projectPath) {
   for (const file of files) {
     const filePath = join(sessionDir, file);
     try {
-      const session = await parseOneSession(filePath, projectPath, routingPaths);
+      const session = await parseOneSession(filePath, projectPath, routingPaths, rootHasAgentMemory);
       if (session && session.sessionId) {
         sessions.push(session);
       }
@@ -44,7 +45,7 @@ export async function parseSessions(projectPath) {
 /**
  * Parse a single JSONL file into a session object.
  */
-async function parseOneSession(filePath, projectPath, routingPaths) {
+async function parseOneSession(filePath, projectPath, routingPaths, rootHasAgentMemory) {
   const session = {
     sessionId: null,
     startTime: null,
@@ -58,6 +59,8 @@ async function parseOneSession(filePath, projectPath, routingPaths) {
     fileReads: [],        // all file paths read
     claudeMdReads: [],    // CLAUDE.md reads specifically
     isHamOn: false,
+    rootClaudeMdRead: false,
+    subdirClaudeMdRead: false,
     routingStatus: 'unrouted',
     primaryDirectory: null,
     messageCount: 0,
@@ -142,10 +145,11 @@ async function parseOneSession(filePath, projectPath, routingPaths) {
               if (basename(fp) === 'CLAUDE.md') {
                 session.claudeMdReads.push(fp);
 
-                // HAM-on: CLAUDE.md in project tree but NOT the root one
                 const rel = relative(projectPath, fp);
-                if (rel && !rel.startsWith('..') && rel !== 'CLAUDE.md') {
-                  session.isHamOn = true;
+                if (rel === 'CLAUDE.md') {
+                  session.rootClaudeMdRead = true;
+                } else if (rel && !rel.startsWith('..')) {
+                  session.subdirClaudeMdRead = true;
                 }
               }
             }
@@ -188,6 +192,9 @@ async function parseOneSession(filePath, projectPath, routingPaths) {
   // Attribute primary directory
   session.primaryDirectory = attributeDirectory(session.fileReads, projectPath);
 
+  // HAM-on: requires both root and subdir CLAUDE.md reads, plus root has Agent Memory System
+  session.isHamOn = session.rootClaudeMdRead && session.subdirClaudeMdRead && rootHasAgentMemory;
+
   // Determine routing status
   session.routingStatus = determineRoutingStatus(session, projectPath, routingPaths);
 
@@ -225,7 +232,8 @@ function attributeDirectory(fileReads, projectPath) {
 
 /**
  * Extract routing paths from the root CLAUDE.md's "## Context Routing" section.
- * Returns an array of absolute paths. Cached per parseSessions() invocation.
+ * Returns { paths: string[], content: string } where content is the raw root CLAUDE.md.
+ * Cached per parseSessions() invocation.
  */
 function extractRoutingPaths(projectPath) {
   const claudeMdPath = join(projectPath, 'CLAUDE.md');
@@ -233,7 +241,7 @@ function extractRoutingPaths(projectPath) {
   try {
     content = readFileSync(claudeMdPath, 'utf-8');
   } catch {
-    return [];
+    return { paths: [], content: '' };
   }
 
   const lines = content.split('\n');
@@ -257,7 +265,7 @@ function extractRoutingPaths(projectPath) {
     }
   }
 
-  return paths;
+  return { paths, content };
 }
 
 /**

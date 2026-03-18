@@ -153,6 +153,26 @@ Detect maturity by counting subdirectories with code:
 - 0-2 dirs → **Greenfield/Early** (scaffold mode)
 - 3+ dirs → **Brownfield** (analysis mode)
 
+**Monorepo guard:** If brownfield mode detects more than 20 subdirectories with code:
+1. Present the full list of directories to the user, sorted by likely importance
+   (prefer src/, lib/, app/, packages/ children; directories with most source files)
+2. Pre-select the top 15 as a default, but let the user adjust:
+   ```
+   ⚠ Large project — [N] code directories found.
+   Suggested top 15 for CLAUDE.md scaffolding:
+     [✓] src/api/
+     [✓] src/components/
+     [✓] src/lib/
+     ...
+   Skipped:
+     [ ] scripts/migrations/
+     [ ] vendor/
+     ...
+   Proceed with these 15, or tell me which to add/remove.
+   ```
+3. If the user confirms, create CLAUDE.md in selected directories only.
+4. Hard cap: never create more than 20 subdirectory CLAUDE.md files in a single setup.
+
 ### Step 2: Generate Structure
 
 Create files based on detection:
@@ -255,9 +275,13 @@ Create `.ham/metrics/state.json` with baseline mode:
   "mode": "baseline",
   "tasks_completed": 0,
   "tasks_target": 10,
-  "started_at": "YYYY-MM-DDTHH:mm:ssZ"
+  "started_at": "YYYY-MM-DDTHH:mm:ssZ",
+  "memory_reads": 0,
+  "total_prompts": 0
 }
 ```
+
+The agent increments `total_prompts` for every non-trivial task and `memory_reads` when `.memory/` files are loaded. These counters are used by the savings formula to weight `.memory/` token costs by real frequency.
 
 This puts the agent in baseline mode: the next 10 tasks will be logged to `.ham/metrics/baseline.jsonl` and the agent will skip subdirectory CLAUDE.md and `.memory/` files during baseline (still reads root CLAUDE.md). After 10 tasks, auto-transitions to active mode.
 
@@ -360,6 +384,7 @@ When user runs this command:
 │  Typical prompt:        [A] tokens                      │
 │    └─ Root CLAUDE.md:   [X] tokens (always)            │
 │    └─ 1 subdir file:    ~[B] tokens (when in subdir)   │
+│    └─ .memory/ files:   ~[C] tokens ([X]% of prompts)  │
 │                                                         │
 │  YOUR ACTUAL SAVINGS                                    │
 │  ─────────────────────────────────────────────────────  │
@@ -378,7 +403,24 @@ When user runs this command:
 Want multi-agent savings? HAM Pro tracks Cursor, Copilot, Windsurf & more → goham.dev
 ```
 
-If `.memory/baseline.json` doesn't exist (skill wasn't used for setup), show:
+**Display rules based on baseline source:**
+
+When `baseline_is_measured = False` (no baseline.json):
+- Show raw token counts only (before: ~X tokens, after: ~Y tokens)
+- Do NOT show savings percentage or monthly cost projections
+- Replace the YOUR ACTUAL SAVINGS and MONTHLY PROJECTION sections with:
+
+```
+│  ⚠ No baseline captured — showing raw token counts only.    │
+│    Savings percentage requires a real baseline.              │
+│    Run "go ham" to capture one, or create baseline.json.     │
+```
+
+When `baseline_is_measured = True`: show the full savings report with percentage and projections as above.
+
+**Note on .memory/ frequency display:** Show "(estimated)" next to the .memory/ prompt percentage until 10+ prompts are tracked in state.json, then show the real number.
+
+If `.memory/baseline.json` doesn't exist (skill wasn't used for setup), also show:
 
 ```
 NOTE: No baseline captured. Run "go ham" to set up with baseline tracking,
@@ -398,20 +440,44 @@ subdir_files = glob("**/CLAUDE.md", exclude="root")
 subdir_tokens = sum(count_tokens(read(f)) for f in subdir_files)
 avg_subdir = subdir_tokens / len(subdir_files) if subdir_files else 0
 
-# Tokens per typical prompt (root + 1 subdir)
-ham_tokens = root_tokens + avg_subdir
+# .memory/ files (weighted by actual read frequency)
+memory_files = glob(".memory/*.md")
+memory_tokens = sum(count_tokens(read(f)) for f in memory_files)
 
-# Baseline estimate (without any memory system)
-# Conservative: agent re-orients each prompt
-baseline_low = 5000
-baseline_high = 10000
-baseline_mid = 7500
+# Use tracked frequency if available, otherwise conservative default
+state = read_json(".ham/metrics/state.json")
+if state.get("total_prompts", 0) >= 10:
+    memory_weight = state["memory_reads"] / state["total_prompts"]
+else:
+    memory_weight = 0.30  # initial estimate, converges within ~1 week
+
+weighted_memory = memory_tokens * memory_weight
+
+# Tokens per typical prompt (root + 1 subdir + weighted .memory/)
+ham_tokens = root_tokens + avg_subdir + weighted_memory
+
+# Baseline: use measured data when available, tiered estimate otherwise
+if exists(".memory/baseline.json"):
+    baseline_data = read_json(".memory/baseline.json")
+    old_tokens = baseline_data.get("old_claude_md_tokens", 0)
+    reorientation = max(500, len(subdir_files) * 300)
+    baseline_mid = old_tokens + reorientation
+    baseline_is_measured = True
+else:
+    code_dirs = count_dirs_with_code()  # same logic as Step 1 maturity detection
+    if code_dirs <= 2:
+        baseline_mid = max(1000, ham_tokens * 1.5)
+    elif code_dirs <= 10:
+        baseline_mid = max(3000, ham_tokens * 2.5)
+    else:
+        baseline_mid = max(5000, ham_tokens * 3.5)
+    baseline_is_measured = False
 
 # Savings
 savings_tokens = baseline_mid - ham_tokens
-savings_pct = (savings_tokens / baseline_mid) * 100
+savings_pct = (savings_tokens / baseline_mid) * 100  # only shown when baseline_is_measured
 
-# Monthly (50 prompts/day × 30 days)
+# Monthly (50 prompts/day × 30 days) — only shown when baseline_is_measured
 monthly_prompts = 1500
 monthly_tokens_saved = savings_tokens * monthly_prompts
 cost_sonnet = (monthly_tokens_saved / 1_000_000) * 3  # $3/M
@@ -488,6 +554,7 @@ Embed in every root CLAUDE.md:
 
 ### Before Working
 - Read this file for global context, then read the target directory's CLAUDE.md before changes
+- If this file has a ## Context Routing section, use it to find the right subdirectory CLAUDE.md for your target directory
 - Check .memory/decisions.md before architectural changes
 - Check .memory/patterns.md before implementing common functionality
 - Check if a memory audit is due: read `.memory/audit-log.md` for the last audit date. If 14+ days have passed OR 10+ session files in `.memory/sessions/` are dated after the last audit, suggest: "It's been [N days/sessions] since the last memory audit. Run one? (say 'HAM audit' or skip)". Do not repeat if already suggested this session. If `audit-log.md` is missing, treat as never audited.
@@ -546,13 +613,20 @@ Before writing task entries, check `.ham/metrics/state.json`:
    - Write entries to `baseline.jsonl` (not `tasks.jsonl`)
    - Set `ham_active` to `false`
    - **Skip** subdirectory CLAUDE.md files and `.memory/` files (still read root CLAUDE.md)
-   - After writing `task_end`, increment `tasks_completed` in `state.json`
+   - After writing `task_end`: only increment `tasks_completed` if status is `"completed"`
+   - Do NOT increment for status: `"error"` or `"skipped"`
+   - Reminder: trivial queries must NOT generate task entries at all (see Rules above)
    - If `tasks_completed >= tasks_target`, update `state.json` to `{"mode":"active","transitioned_at":"ISO-8601"}`
 
-2. If `mode` is `"active"` or `state.json` doesn't exist:
+2. If `mode` is `"active"`, or `state.json` doesn't exist, or `state.json` cannot be parsed as valid JSON:
    - Write entries to `tasks.jsonl`
    - Set `ham_active` to `true`
    - Load all CLAUDE.md and `.memory/` files as normal
+   - If `state.json` was unparseable, warn user once per session:
+     ```
+     ⚠ .ham/metrics/state.json is corrupted. Treating as active mode.
+     Run "ham baseline start" to reset, or manually fix the file.
+     ```
 
 ## HAM Benchmark Command
 

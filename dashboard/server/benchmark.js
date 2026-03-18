@@ -14,19 +14,25 @@ function round2(n) {
 }
 
 function readJsonlFile(filePath) {
-  if (!existsSync(filePath)) return [];
+  if (!existsSync(filePath)) return { entries: [], warning: null };
   try {
     const content = readFileSync(filePath, 'utf-8');
-    return content
-      .split('\n')
-      .filter(line => line.trim())
-      .map(line => {
-        try { return JSON.parse(line); }
-        catch { return null; }
-      })
-      .filter(Boolean);
-  } catch {
-    return [];
+    const lines = content.split('\n').filter(line => line.trim());
+    let skipped = 0;
+    const entries = [];
+    for (const line of lines) {
+      try {
+        entries.push(JSON.parse(line));
+      } catch {
+        skipped++;
+      }
+    }
+    const warning = skipped > 0
+      ? `${skipped} malformed line(s) skipped in ${filePath}`
+      : null;
+    return { entries, warning };
+  } catch (err) {
+    return { entries: [], warning: `Failed to read ${filePath}: ${err.message}` };
   }
 }
 
@@ -114,13 +120,13 @@ function getCacheRate(task, sessions) {
 export function getBenchmarkState(projectPath) {
   const statePath = join(projectPath, '.ham', 'metrics', 'state.json');
   if (!existsSync(statePath)) {
-    return { mode: 'none' };
+    return { mode: 'none', warning: null };
   }
   try {
     const content = readFileSync(statePath, 'utf-8');
-    return JSON.parse(content);
-  } catch {
-    return { mode: 'none' };
+    return { ...JSON.parse(content), warning: null };
+  } catch (err) {
+    return { mode: 'active', warning: `state.json is corrupted: ${err.message}. Treating as active mode.` };
   }
 }
 
@@ -129,8 +135,8 @@ export function getBenchmarkState(projectPath) {
  */
 export function readTaskEntries(projectPath, filename) {
   const filePath = join(projectPath, '.ham', 'metrics', filename);
-  const entries = readJsonlFile(filePath);
-  return pairTaskEntries(entries);
+  const { entries, warning } = readJsonlFile(filePath);
+  return { tasks: pairTaskEntries(entries), warning };
 }
 
 /**
@@ -139,8 +145,11 @@ export function readTaskEntries(projectPath, filename) {
  */
 export function calculateBenchmarkSummary(projectPath, sessions, days) {
   const filtered = filterByDays(sessions, days);
-  const tasks = readTaskEntries(projectPath, 'tasks.jsonl');
-  const baselineTasks = readTaskEntries(projectPath, 'baseline.jsonl');
+  const warnings = [];
+  const { tasks, warning: tw } = readTaskEntries(projectPath, 'tasks.jsonl');
+  const { tasks: baselineTasks, warning: bw } = readTaskEntries(projectPath, 'baseline.jsonl');
+  if (tw) warnings.push(tw);
+  if (bw) warnings.push(bw);
   const allTasks = [...baselineTasks, ...tasks];
 
   if (allTasks.length === 0) {
@@ -151,6 +160,7 @@ export function calculateBenchmarkSummary(projectPath, sessions, days) {
       avgFilesRead: 0,
       avgCacheRate: 0,
       byMode: { baseline: null, active: null },
+      warnings,
     };
   }
 
@@ -192,6 +202,7 @@ export function calculateBenchmarkSummary(projectPath, sessions, days) {
       baseline: summarize(baselineGroup),
       active: summarize(activeGroup),
     },
+    warnings,
   };
 }
 
@@ -200,11 +211,14 @@ export function calculateBenchmarkSummary(projectPath, sessions, days) {
  */
 export function calculateBenchmarkComparison(projectPath, sessions, days) {
   const filtered = filterByDays(sessions, days);
-  const baselineTasks = readTaskEntries(projectPath, 'baseline.jsonl');
-  const activeTasks = readTaskEntries(projectPath, 'tasks.jsonl');
+  const warnings = [];
+  const { tasks: baselineTasks, warning: bw } = readTaskEntries(projectPath, 'baseline.jsonl');
+  const { tasks: activeTasks, warning: tw } = readTaskEntries(projectPath, 'tasks.jsonl');
+  if (bw) warnings.push(bw);
+  if (tw) warnings.push(tw);
 
   if (baselineTasks.length === 0 && activeTasks.length === 0) {
-    return { hasData: false, baseline: null, active: null, comparison: null, byModel: {} };
+    return { hasData: false, baseline: null, active: null, comparison: null, byModel: {}, warnings };
   }
 
   function summarizeGroup(taskList) {
@@ -268,6 +282,7 @@ export function calculateBenchmarkComparison(projectPath, sessions, days) {
     active,
     comparison,
     byModel,
+    warnings,
   };
 }
 
@@ -276,22 +291,28 @@ export function calculateBenchmarkComparison(projectPath, sessions, days) {
  */
 export function getRecentTasks(projectPath, sessions, limit = 20, days = 30) {
   const filtered = filterByDays(sessions, days);
-  const tasks = readTaskEntries(projectPath, 'tasks.jsonl');
-  const baselineTasks = readTaskEntries(projectPath, 'baseline.jsonl');
+  const warnings = [];
+  const { tasks, warning: tw } = readTaskEntries(projectPath, 'tasks.jsonl');
+  const { tasks: baselineTasks, warning: bw } = readTaskEntries(projectPath, 'baseline.jsonl');
+  if (tw) warnings.push(tw);
+  if (bw) warnings.push(bw);
   const allTasks = [...baselineTasks, ...tasks]
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, limit);
 
-  return allTasks.map(t => ({
-    id: t.id,
-    description: t.description,
-    timestamp: t.timestamp,
-    durationSec: t.durationSec,
-    tokens: correlateTokens(t, filtered),
-    model: t.model,
-    ham_active: t.ham_active,
-    files_read: t.files_read,
-    cacheRate: getCacheRate(t, filtered),
-    status: t.status,
-  }));
+  return {
+    tasks: allTasks.map(t => ({
+      id: t.id,
+      description: t.description,
+      timestamp: t.timestamp,
+      durationSec: t.durationSec,
+      tokens: correlateTokens(t, filtered),
+      model: t.model,
+      ham_active: t.ham_active,
+      files_read: t.files_read,
+      cacheRate: getCacheRate(t, filtered),
+      status: t.status,
+    })),
+    warnings,
+  };
 }

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "node start.js"
+    "start": "node start.js",
+    "test": "node --test server/*.test.js"
   },
   "dependencies": {
     "react": "^18.3.1",

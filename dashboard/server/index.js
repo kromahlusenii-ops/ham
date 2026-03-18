@@ -176,16 +176,20 @@ async function handleApi(pathname, params, res) {
         break;
       }
 
-      case '/api/benchmark':
-        data = {
-          ...calculateBenchmarkSummary(projectPath, cachedSessions, days),
-          state: getBenchmarkState(projectPath),
-        };
+      case '/api/benchmark': {
+        const summary = calculateBenchmarkSummary(projectPath, cachedSessions, days);
+        const state = getBenchmarkState(projectPath);
+        const allWarnings = [...(summary.warnings || [])];
+        if (state.warning) allWarnings.push(state.warning);
+        data = { ...summary, state, warnings: allWarnings };
         break;
+      }
 
-      case '/api/benchmark/tasks':
-        data = getRecentTasks(projectPath, cachedSessions, limit, days);
+      case '/api/benchmark/tasks': {
+        const result = getRecentTasks(projectPath, cachedSessions, limit, days);
+        data = { tasks: result.tasks, warnings: result.warnings };
         break;
+      }
 
       case '/api/benchmark/comparison':
         data = calculateBenchmarkComparison(projectPath, cachedSessions, days);
