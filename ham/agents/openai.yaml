@@ -1,0 +1,4 @@
+interface:
+  display_name: "HAM"
+  short_description: "Set up and maintain scoped HAM memory"
+  default_prompt: "Use $ham to set up or maintain file-based HAM memory in this repo."

@@ -12,7 +12,7 @@ HAM is a memory system for AI coding agents that reduces token consumption by up
 
 Less tokens. Faster agents. Lower costs. Greener AI.
 
-> **Claude Code only** — HAM is a skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and only works with Claude coding agents. It is not compatible with Cursor, Copilot, Windsurf, or other AI coding tools.
+> HAM ships with a file-based skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and a Codex skill package in [`ham/`](./ham).
 
 ---
 
@@ -78,6 +78,8 @@ HAM makes your AI usage greener by eliminating the tokens that never needed to e
 
 ## Installation
 
+### Claude Code
+
 ```bash
 git clone https://github.com/kromahlusenii-ops/ham.git ~/.claude/skills/ham
 ```
@@ -95,6 +97,22 @@ git clone https://github.com/kromahlusenii-ops/ham.git .claude/skills/ham
 ```
 
 Project-level skills live in `.claude/skills/` and are only active in that project.
+
+### Codex
+
+The Codex skill lives in [`ham/`](./ham).
+
+Copy or install that folder into your Codex skills directory as `ham`, then invoke it with:
+
+```text
+$ham
+```
+
+The Codex version uses the same file-based HAM model:
+
+- `CLAUDE.md` for root and scoped context
+- `.memory/` for decisions, patterns, inbox, and audits
+- `.ham/` for versioning and baseline metrics
 
 ## Quick Start
 
@@ -125,6 +143,8 @@ HAM follows three principles:
 **Read small, read relevant.** The agent loads root context + the target directory's context. Two to three small files instead of the entire project.
 
 **Self-maintaining memory.** Decision files and pattern logs update as the agent works. The root CLAUDE.md instructs the agent to read before coding and write before closing — context stays fresh without manual maintenance.
+
+For Codex, the included [`ham/`](./ham) skill mirrors the same workflow using local files rather than MCP-specific behavior.
 
 ## Commands
 
