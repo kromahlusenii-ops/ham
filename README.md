@@ -82,6 +82,20 @@ HAM makes your AI usage greener by eliminating the tokens that never needed to e
 git clone https://github.com/kromahlusenii-ops/ham.git ~/.claude/skills/ham
 ```
 
+This installs HAM globally — it's available in every project you open with Claude Code.
+
+### Add to a specific project only
+
+If you prefer to scope HAM to a single project instead of installing it globally:
+
+```bash
+cd your-project
+mkdir -p .claude/skills
+git clone https://github.com/kromahlusenii-ops/ham.git .claude/skills/ham
+```
+
+Project-level skills live in `.claude/skills/` and are only active in that project.
+
 ## Quick Start
 
 Open Claude Code in your project directory and say:
