@@ -1,8 +1,8 @@
-import { readdir, stat } from 'fs/promises';
-import { createReadStream, readFileSync } from 'fs';
-import { createInterface } from 'readline';
+import { readdir } from 'fs/promises';
+import { readFileSync } from 'fs';
 import { join, basename, dirname, relative } from 'path';
 import { getProjectSessionDir } from './utils.js';
+import { parseSessionFile } from './session-core.js';
 
 /**
  * Parse all session JSONL files for a given project path.
@@ -44,150 +44,33 @@ export async function parseSessions(projectPath) {
 
 /**
  * Parse a single JSONL file into a session object.
+ * Layers dashboard-specific logic (routing, turns, primaryDirectory) on top of session-core.
  */
 async function parseOneSession(filePath, projectPath, routingPaths, rootHasAgentMemory) {
+  const raw = await parseSessionFile(filePath, projectPath);
+
+  // Build dashboard-specific session object
   const session = {
-    sessionId: null,
-    startTime: null,
-    endTime: null,
-    durationMs: 0,
-    model: null,
-    inputTokens: 0,
-    outputTokens: 0,
-    cacheReadTokens: 0,
-    cacheCreationTokens: 0,
-    fileReads: [],        // all file paths read
-    claudeMdReads: [],    // CLAUDE.md reads specifically
+    sessionId: raw.sessionId,
+    startTime: raw.startTime,
+    endTime: raw.endTime,
+    durationMs: raw.durationMs,
+    model: raw.model,
+    inputTokens: raw.inputTokens,
+    outputTokens: raw.outputTokens,
+    cacheReadTokens: raw.cacheReadTokens,
+    cacheCreationTokens: raw.cacheCreationTokens,
+    fileReads: raw.fileReads,
+    claudeMdReads: raw.claudeMdReads,
     isHamOn: false,
-    rootClaudeMdRead: false,
-    subdirClaudeMdRead: false,
+    rootClaudeMdRead: raw.rootClaudeMdRead,
+    subdirClaudeMdRead: raw.subdirClaudeMdRead,
     routingStatus: 'unrouted',
     primaryDirectory: null,
-    messageCount: 0,
-    toolCallCount: 0,
-    turns: [],
+    messageCount: raw.messageCount,
+    toolCallCount: raw.toolCallCount,
+    turns: [],  // turns are not reconstructed from session-core (dashboard calculates separately if needed)
   };
-
-  let currentTurn = null;
-
-  const rl = createInterface({
-    input: createReadStream(filePath),
-    crlfDelay: Infinity,
-  });
-
-  const timestamps = [];
-
-  for await (const line of rl) {
-    if (!line.trim()) continue;
-
-    let entry;
-    try {
-      entry = JSON.parse(line);
-    } catch {
-      continue; // skip malformed lines
-    }
-
-    // Extract sessionId from user entries
-    if (entry.sessionId && !session.sessionId) {
-      session.sessionId = entry.sessionId;
-    }
-
-    // Collect timestamps from any entry that has one
-    const ts = entry.timestamp || entry.message?.timestamp;
-    if (ts) {
-      timestamps.push(ts);
-    }
-
-    const msg = entry.message;
-    if (!msg) continue;
-
-    // Process assistant messages
-    if (msg.role === 'assistant') {
-      session.messageCount++;
-
-      // Token usage
-      const usage = msg.usage;
-      if (usage) {
-        const inTok = usage.input_tokens || 0;
-        const outTok = usage.output_tokens || 0;
-        const cacheRead = usage.cache_read_input_tokens || 0;
-        session.inputTokens += inTok;
-        session.outputTokens += outTok;
-        session.cacheReadTokens += cacheRead;
-        session.cacheCreationTokens += usage.cache_creation_input_tokens || 0;
-
-        if (currentTurn) {
-          currentTurn.inputTokens += inTok;
-          currentTurn.outputTokens += outTok;
-          currentTurn.cacheReadTokens += cacheRead;
-        }
-      }
-
-      // Model detection
-      if (msg.model && !session.model) {
-        session.model = msg.model;
-      }
-
-      // Tool use extraction
-      const contents = msg.content;
-      if (Array.isArray(contents)) {
-        for (const block of contents) {
-          if (block.type === 'tool_use') {
-            session.toolCallCount++;
-            if (currentTurn) currentTurn.toolCalls++;
-
-            if (block.name === 'Read' && block.input?.file_path) {
-              const fp = block.input.file_path;
-              session.fileReads.push(fp);
-              if (currentTurn) currentTurn.fileReads.push(fp);
-
-              // Check if it's a CLAUDE.md read
-              if (basename(fp) === 'CLAUDE.md') {
-                session.claudeMdReads.push(fp);
-
-                const rel = relative(projectPath, fp);
-                if (rel === 'CLAUDE.md') {
-                  session.rootClaudeMdRead = true;
-                } else if (rel && !rel.startsWith('..')) {
-                  session.subdirClaudeMdRead = true;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    // Also count user messages and track turns
-    if (msg.role === 'user') {
-      session.messageCount++;
-      // Push previous turn (if it has assistant data) and start a new one
-      if (currentTurn && currentTurn.inputTokens > 0) {
-        session.turns.push(currentTurn);
-      }
-      currentTurn = {
-        turnIndex: session.turns.length,
-        inputTokens: 0,
-        outputTokens: 0,
-        cacheReadTokens: 0,
-        fileReads: [],
-        toolCalls: 0,
-      };
-    }
-  }
-
-  // Push the final turn
-  if (currentTurn && currentTurn.inputTokens > 0) {
-    session.turns.push(currentTurn);
-  }
-
-  // Calculate timestamps
-  if (timestamps.length > 0) {
-    timestamps.sort();
-    session.startTime = timestamps[0];
-    session.endTime = timestamps[timestamps.length - 1];
-    session.durationMs = new Date(session.endTime) - new Date(session.startTime);
-  }
 
   // Attribute primary directory
   session.primaryDirectory = attributeDirectory(session.fileReads, projectPath);
@@ -233,7 +116,6 @@ function attributeDirectory(fileReads, projectPath) {
 /**
  * Extract routing paths from the root CLAUDE.md's "## Context Routing" section.
  * Returns { paths: string[], content: string } where content is the raw root CLAUDE.md.
- * Cached per parseSessions() invocation.
  */
 function extractRoutingPaths(projectPath) {
   const claudeMdPath = join(projectPath, 'CLAUDE.md');

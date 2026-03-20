@@ -24,11 +24,13 @@ export function getProjectSessionDir(projectPath) {
 /**
  * Calculate cost in dollars from token counts and model
  */
-export function calculateCost(inputTokens, outputTokens, model) {
+export function calculateCost(inputTokens, outputTokens, model, cacheReadTokens = 0, cacheWriteTokens = 0) {
   const pricing = MODEL_PRICING[model] || MODEL_PRICING['claude-sonnet-4-6'];
   const inputCost = (inputTokens / 1_000_000) * pricing.input;
   const outputCost = (outputTokens / 1_000_000) * pricing.output;
-  return inputCost + outputCost;
+  const cacheReadCost = (cacheReadTokens / 1_000_000) * (pricing.input * 0.1);
+  const cacheWriteCost = (cacheWriteTokens / 1_000_000) * (pricing.input * 1.25);
+  return inputCost + outputCost + cacheReadCost + cacheWriteCost;
 }
 
 /**
