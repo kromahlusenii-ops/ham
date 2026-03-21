@@ -9,7 +9,7 @@ const showJson = args.includes('--json');
 const projectPath = process.cwd();
 
 const sessions = await parseSessions(projectPath);
-const state = getBenchmarkState(projectPath);
+const state = getBenchmarkState(projectPath, sessions);
 const summary = calculateBenchmarkSummary(projectPath, sessions, days);
 const comparison = calculateBenchmarkComparison(projectPath, sessions, days);
 

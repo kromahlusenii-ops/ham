@@ -117,14 +117,26 @@ function getCacheRate(task, sessions) {
 /**
  * Read benchmark state from .ham/metrics/state.json
  */
-export function getBenchmarkState(projectPath) {
+export function getBenchmarkState(projectPath, sessions = []) {
   const statePath = join(projectPath, '.ham', 'metrics', 'state.json');
   if (!existsSync(statePath)) {
     return { mode: 'none', warning: null };
   }
   try {
     const content = readFileSync(statePath, 'utf-8');
-    return { ...JSON.parse(content), warning: null };
+    const state = { ...JSON.parse(content), warning: null };
+
+    // When in baseline mode, derive tasks_completed from actual sessions
+    // instead of relying on the LLM to increment state.json
+    if (state.mode === 'baseline' && state.started_at && sessions.length > 0) {
+      const startedAt = new Date(state.started_at).getTime();
+      const sessionsSinceBaseline = sessions.filter(s =>
+        s.startTime && new Date(s.startTime).getTime() >= startedAt
+      );
+      state.tasks_completed = sessionsSinceBaseline.length;
+    }
+
+    return state;
   } catch (err) {
     return { mode: 'active', warning: `state.json is corrupted: ${err.message}. Treating as active mode.` };
   }

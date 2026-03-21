@@ -178,7 +178,7 @@ async function handleApi(pathname, params, res) {
 
       case '/api/benchmark': {
         const summary = calculateBenchmarkSummary(projectPath, cachedSessions, days);
-        const state = getBenchmarkState(projectPath);
+        const state = getBenchmarkState(projectPath, cachedSessions);
         const allWarnings = [...(summary.warnings || [])];
         if (state.warning) allWarnings.push(state.warning);
         data = { ...summary, state, warnings: allWarnings };
